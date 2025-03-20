@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { extend, Application, useApplication } from "@pixi/react";
 import {
   Container,
@@ -9,11 +15,12 @@ import {
   Assets,
   Rectangle,
   Filter,
+  SCALE_MODE,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
 import useIndexedDB from "../hooks/useIndexedDB";
-import { BLEND_MODES } from "@pixi/constants";
+import { SCALE_MODES } from "@pixi/constants";
 import useFloodFill from "../hooks/useFloodFill";
 
 extend({ Container, Sprite, Graphics });
@@ -34,29 +41,27 @@ const Canvas = () => {
   const { floodFill } = useFloodFill();
   const [checkeredTexture, setCheckeredTexture] = useState(null);
   const [texturesLoaded, setTexturesLoaded] = useState(false);
-  const { dbReady, putRecord, getAllRecords, dbItems } = useIndexedDB();
-
+  const { dbReady, putRecord, getAllRecords } = useIndexedDB();
+  const [scaleFactor, setScaleFactor] = useState(1);
   const originalTextureObj = loadedTextures[selectedImageKey]?.[selectedLayer];
   const textureWidth = originalTextureObj?.texture?.width || 2000;
   const textureHeight = originalTextureObj?.texture?.height || 1000;
+  const screenWidth = appRef.current?.getApplication()?.screen.width;
+  const screenHeight = appRef.current?.getApplication()?.screen.height;
 
   const loadTexture = (url) =>
     Assets.load(url).then((texture) => ({ url, texture }));
 
   const loadAllTextures = async () => {
     try {
-      console.log(processedImages);
       const textures2D = await Promise.all(
         processedImages.map(async (imageLayers) => {
-          // For each image's layers, load their textures in order
           const textures = await Promise.all(
             imageLayers.map((url) => loadTexture(url))
           );
           return textures;
         })
       );
-      console.log("cehck dta");
-      console.log(textures2D);
       setLoadedTextures(textures2D);
       setTexturesLoaded(true);
     } catch (error) {
@@ -72,7 +77,6 @@ const Canvas = () => {
   // put texture urls to database
   useEffect(() => {
     if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
-    console.log(loadedTextures);
 
     loadedTextures.forEach((imageLayers, imgIndex) => {
       const record = {
@@ -92,8 +96,6 @@ const Canvas = () => {
     if (!dbReady) return;
     getAllRecords()
       .then(async (items) => {
-        console.log("IndexedDB items:", items);
-
         const textures = await Promise.all(
           items.map(async (item) => {
             const imageLayers = await Promise.all(
@@ -110,8 +112,6 @@ const Canvas = () => {
             return imageLayers;
           })
         );
-
-        console.log("Reconstructed textures:", textures);
         setLoadedTextures(textures);
       })
       .catch((error) =>
@@ -155,7 +155,6 @@ const Canvas = () => {
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
-      console.log(drawingPath);
       ctx.stroke(); // Apply stroke
     },
     [drawingPath, textureWidth, textureHeight]
@@ -172,21 +171,20 @@ const Canvas = () => {
     // Set fill style and stroke color
     ctx.beginPath();
     ctx.strokeStyle = selectedColor;
-    ctx.strokeStyle.width = sizeRef.current;
-    drawingPath.forEach(([x, y], i) => {
-      const shiftedX = x + textureWidth / 2;
-      const shiftedY = y + textureHeight / 2;
+    ctx.strokeStyle.width = sizeRef.current / scaleFactor;
 
-      if (i === 0) ctx.moveTo(shiftedX, shiftedY);
-      else ctx.lineTo(shiftedX, shiftedY);
+    drawingPath.forEach(([x, y], i) => {
+      const adjustedX = x / scaleFactor;
+      const adjustedY = y / scaleFactor;
+      if (i === 0) ctx.moveTo(adjustedX, adjustedY);
+      else ctx.lineTo(adjustedX, adjustedY);
     });
 
-    ctx.lineWidth = 20; // Set line width for visibility
     ctx.stroke(); // Apply stroke
-
     const originalTextureObj = loadedTextures[selectedImageKey][selectedLayer];
     if (!originalTextureObj) return;
     const { texture: originalTexture } = originalTextureObj;
+    originalTexture.scaleMode = SCALE_MODES.NEAREST;
 
     // Create a sprite for the original texture
     const originalSprite = new Sprite(originalTexture);
@@ -257,10 +255,36 @@ const Canvas = () => {
   //   setCheckeredTexture(texture);
   //   graphics.destroy();
   // }, [selectedImageKey]);
+  useEffect(() => {
+    setScaleFactor(
+      Math.min(screenWidth / textureWidth, screenHeight / textureHeight)
+    );
+  }, [parentRef.current]);
+
+  useLayoutEffect(() => {
+    const handleWheel = (event) => {
+      const delta = Math.sign(event.deltaY);
+      const zoomFactor = 1.1;
+      if (delta < 0) {
+        // Zoom in
+        setScaleFactor((prev) => Math.min(prev * zoomFactor, 5)); // Limit maximum zoom level
+        console.log("up");
+      } else {
+        // Zoom out
+        setScaleFactor((prev) => Math.max(prev / zoomFactor, 0.2)); // Limit minimum zoom level
+        console.log("down");
+      }
+    };
+
+    const parentElement = parentRef.current;
+    parentElement?.addEventListener("wheel", handleWheel);
+
+    return () => {
+      parentElement?.removeEventListener("wheel", handleWheel);
+    };
+  }, [parentRef.current]);
 
   if (!texturesLoaded) return <div>Loading...</div>;
-  console.log(loadedTextures);
-  console.log(processedImages);
   return (
     <div
       ref={parentRef}
@@ -287,8 +311,12 @@ const Canvas = () => {
                 <pixiSprite
                   texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
                   anchor={0.5} // Center the sprite relative to its own dimensions
-                  x={appRef.current?.getApplication().screen.width / 2} // Center on screen
-                  y={appRef.current?.getApplication().screen.height / 2}
+                  x={appRef.current?.getApplication()?.screen.width / 2} // Center on screen
+                  y={appRef.current?.getApplication()?.screen.height / 2}
+                  scale={{
+                    x: scaleFactor,
+                    y: scaleFactor,
+                  }}
                 />
 
                 {(() => {
@@ -298,8 +326,16 @@ const Canvas = () => {
                   ) {
                     return (
                       <pixiGraphics
-                        x={appRef.current?.getApplication().screen.width / 2}
-                        y={appRef.current?.getApplication().screen.height / 2}
+                        x={
+                          (appRef.current?.getApplication()?.screen.width -
+                            textureWidth * scaleFactor) /
+                          2
+                        }
+                        y={
+                          (appRef.current?.getApplication()?.screen.height -
+                            textureHeight * scaleFactor) /
+                          2
+                        }
                         draw={draw}
                         interactive={true}
                         onPointerDown={handlePointerDown}
@@ -307,10 +343,10 @@ const Canvas = () => {
                         onPointerUp={handlePointerUp}
                         hitArea={
                           new Rectangle(
-                            -textureWidth / 2,
-                            -textureHeight / 2,
-                            textureWidth,
-                            textureHeight
+                            0,
+                            0,
+                            textureWidth * scaleFactor,
+                            textureHeight * scaleFactor
                           )
                         }
                       />
