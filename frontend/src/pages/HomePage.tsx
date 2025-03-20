@@ -5,10 +5,6 @@ import useIndexedDB from "../hooks/useIndexedDB";
 export const HomePage = () => {
   const { dbItems, clearDatabase } = useIndexedDB();
   const { setProcessedImages } = useImageContext();
-  const handleSetImages = () => {
-    console.log(dbItems);
-    setProcessedImages(dbItems.map((el) => el.images));
-  };
 
   // on first button add fucntion to clear database
 
@@ -24,7 +20,7 @@ export const HomePage = () => {
           ))} */}
 
           <Button
-            onClick={handleSetImages}
+            // onClick={handleSetImages}
             content="Resume Session"
             to="/drawing"
           />

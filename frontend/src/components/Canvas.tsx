@@ -34,7 +34,7 @@ const Canvas = () => {
   const { floodFill } = useFloodFill();
   const [checkeredTexture, setCheckeredTexture] = useState(null);
   const [texturesLoaded, setTexturesLoaded] = useState(false);
-  const { dbReady, putRecord, getAllRecords } = useIndexedDB();
+  const { dbReady, putRecord, getAllRecords, dbItems } = useIndexedDB();
 
   const originalTextureObj = loadedTextures[selectedImageKey]?.[selectedLayer];
   const textureWidth = originalTextureObj?.texture?.width || 2000;
@@ -45,6 +45,7 @@ const Canvas = () => {
 
   const loadAllTextures = async () => {
     try {
+      console.log(processedImages);
       const textures2D = await Promise.all(
         processedImages.map(async (imageLayers) => {
           // For each image's layers, load their textures in order
@@ -54,6 +55,8 @@ const Canvas = () => {
           return textures;
         })
       );
+      console.log("cehck dta");
+      console.log(textures2D);
       setLoadedTextures(textures2D);
       setTexturesLoaded(true);
     } catch (error) {
@@ -66,8 +69,9 @@ const Canvas = () => {
     loadAllTextures();
   }, [processedImages]);
 
+  // put texture urls to database
   useEffect(() => {
-    if (!dbReady || !texturesLoaded || !loadedTextures.length) return;
+    if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
     console.log(loadedTextures);
 
     loadedTextures.forEach((imageLayers, imgIndex) => {
@@ -82,9 +86,10 @@ const Canvas = () => {
         .catch((err) => console.error(`Error updating record:`, err));
     });
   }, [texturesLoaded, dbReady, loadedTextures]);
+
+  // make textures from database urls
   useEffect(() => {
     if (!dbReady) return;
-
     getAllRecords()
       .then(async (items) => {
         console.log("IndexedDB items:", items);
@@ -94,8 +99,8 @@ const Canvas = () => {
             const imageLayers = await Promise.all(
               item.images.map(async ({ url }) => {
                 try {
-                  const texture = await loadAllTextures(url);
-                  return { url, texture };
+                  const texture = await loadTexture(url);
+                  return texture;
                 } catch (error) {
                   console.error("Error loading texture from URL:", url, error);
                   return { url, texture: null };
@@ -113,6 +118,7 @@ const Canvas = () => {
         console.error("Failed to fetch textures from IndexedDB:", error)
       );
   }, [dbReady]);
+
   const [drawingPath, setDrawingPath] = useState<number[][]>([]);
   const drawingRef = useRef(false);
   const handlePointerDown = (event) => {
@@ -254,6 +260,7 @@ const Canvas = () => {
 
   if (!texturesLoaded) return <div>Loading...</div>;
   console.log(loadedTextures);
+  console.log(processedImages);
   return (
     <div
       ref={parentRef}
@@ -273,7 +280,7 @@ const Canvas = () => {
           height={textureHeight}
           interactive={false}
         /> */}
-        {processedImages.map((imageLayers, imgIndex) => (
+        {loadedTextures.map((imageLayers, imgIndex) => (
           <pixiContainer key={imgIndex} visible={imgIndex === selectedImageKey}>
             {imageLayers.map((layer, layerIndex) => (
               <pixiContainer key={layerIndex} visible={true}>

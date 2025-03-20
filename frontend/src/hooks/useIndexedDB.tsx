@@ -36,6 +36,7 @@ const useIndexedDB = () => {
       if (!dbRef.current) {
         return reject(new Error("Database not initialized"));
       }
+      console.log("record put");
       const transaction = dbRef.current.transaction("myStore", "readwrite");
       const store = transaction.objectStore("myStore");
       const req = store.put(record); // Using put to add or update
