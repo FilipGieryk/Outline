@@ -49,7 +49,7 @@ const Canvas = () => {
   const textureHeight = originalTextureObj?.texture?.height || 1000;
 
   const loadTexture = (url) =>
-    Assets.load(url).then((texture) => ({ url, texture }));
+    Assets.load(url).then((texture) => ({ url, texture, visible: true }));
 
   const loadAllTextures = async () => {
     try {
@@ -61,6 +61,7 @@ const Canvas = () => {
           return textures;
         })
       );
+      console.log(textures2D);
       setLoadedTextures(textures2D);
       setTexturesLoaded(true);
     } catch (error) {
@@ -228,7 +229,7 @@ const Canvas = () => {
     // Clear drawing path for next time
     setDrawingPath([]);
   };
-
+  console.log(loadedTextures);
   // useEffect(() => {
   //   const app = appRef.current?.getApplication();
   //   if (!app) return;
@@ -328,6 +329,9 @@ const Canvas = () => {
               {imageLayers.map((layer, layerIndex) => (
                 <pixiContainer key={layerIndex} visible={true}>
                   <pixiSprite
+                    visible={
+                      loadedTextures[imgIndex]?.[layerIndex]?.visible === true
+                    }
                     texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
                     // anchor={0.5} // Center the sprite relative to its own dimensions
                     // x={appRef.current?.getApplication()?.screen.width / 2} // Center on screen

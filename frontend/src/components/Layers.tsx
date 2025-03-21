@@ -18,15 +18,39 @@ export const Layers = () => {
     setLoadedTextures,
   } = useImageContext();
 
+  const toggleVisibility = (index) => {
+    setLoadedTextures((prevTextures) => {
+      // Make a shallow copy of the outer array
+      const updatedTextures = [...prevTextures];
+
+      // Make a shallow copy of the layers array for the current image key
+      const layers = [...updatedTextures[selectedImageKey]];
+
+      // Toggle the visible property of the selected layer.
+      // Here we create a new object for that layer to maintain immutability.
+      layers[index] = {
+        ...layers[index],
+        visible: !layers[index].visible,
+      };
+
+      // Update the layers array for that image key
+      updatedTextures[selectedImageKey] = layers;
+
+      return updatedTextures;
+    });
+  };
+
   const SortableItem = ({ id, index }) => {
     const sortable = useSortable({ id, index });
     return (
       <div
         ref={sortable.ref}
-        className="item"
-        onClick={() => setSelectedLayer(index)}
+        className={`flex justify-center gap-2 hover:bg-amber-300 ${
+          index === selectedLayer ? "bg-red-400" : "bg-transparent"
+        }`}
       >
-        Item {id}
+        <div onClick={() => toggleVisibility(index)}>eye</div>
+        <p onClick={() => setSelectedLayer(index)}>Item {id}</p>
       </div>
     );
   };
