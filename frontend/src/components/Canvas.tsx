@@ -220,7 +220,11 @@ const Canvas = () => {
       newTextures[selectedImageKey] = newTextures[selectedImageKey].map(
         (layer, index) =>
           index === selectedLayer
-            ? { texture: renderTexture, url: newUrl }
+            ? {
+                ...layer,
+                texture: renderTexture,
+                url: newUrl,
+              }
             : layer
       );
       return newTextures;
