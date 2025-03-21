@@ -291,9 +291,6 @@ const Canvas = () => {
     const app = appRef.current.getApplication();
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
-  console.log(scaleFactor);
-  console.log(textureHeight);
-
   if (!texturesLoaded) return <div>Loading...</div>;
   return (
     <div
