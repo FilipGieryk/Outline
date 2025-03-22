@@ -3,6 +3,7 @@ import { useImageContext } from "../context/ImageContext";
 import { DndContext } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
+import { RenderTexture } from "pixi.js";
 
 export const Layers = () => {
   const {
@@ -16,6 +17,7 @@ export const Layers = () => {
     sizeRef,
     setColors,
     setLoadedTextures,
+    appRef,
   } = useImageContext();
 
   const toggleVisibility = (index) => {
@@ -55,6 +57,33 @@ export const Layers = () => {
     );
   };
 
+  const handleAddLayer = async () => {
+    const textureRefrence =
+      loadedTextures?.[selectedImageKey]?.[selectedLayer].texture;
+
+    const height = textureRefrence.height;
+    const width = textureRefrence.width;
+    console.log(textureRefrence);
+
+    const newRenderTexture = RenderTexture.create({ width, height });
+
+    const app = appRef.current?.getApplication();
+    const newUrl = await app.renderer.extract.base64(newRenderTexture);
+
+    setLoadedTextures((prevTextures) => {
+      const updatedTextures = [...prevTextures];
+      updatedTextures[selectedImageKey] = [
+        ...updatedTextures[selectedImageKey], // Copy existing layers
+        {
+          texture: newRenderTexture,
+          url: newUrl,
+          visible: true,
+        },
+      ];
+
+      return updatedTextures;
+    });
+  };
   return (
     <div className="bg-gray-400 w-full h-full row-start-3 col-start-3 mt-2">
       <div className="bg-amber-100 w-[90%] h-50 m-auto my-4">
@@ -66,45 +95,30 @@ export const Layers = () => {
       <DragDropProvider
         onDragEnd={(event, manager) => {
           const { operation, canceled } = event;
-          // if (canceled) {
-          //   console.log("dragCanceled");
-          //   return;
-          // }
           if (operation.target) {
-            console.log(
-              `Dropped ${operation.source.id} onto ${operation.target.id}`
-            );
             console.log(operation.target.sortable.previousIndex);
-            setLoadedTextures(
-              (prevTextures) => {
-                const updatedTextures = [...prevTextures];
-                const layers = [...updatedTextures[selectedImageKey]];
-                const [movedItem] = layers.splice(operation.source.id, 1);
+            setLoadedTextures((prevTextures) => {
+              const updatedTextures = [...prevTextures];
+              const layers = [...updatedTextures[selectedImageKey]];
+              const [movedItem] = layers.splice(operation.source.id, 1);
 
-                // Insert the moved item at the target position
-                layers.splice(
-                  operation.target.sortable.previousIndex,
-                  0,
-                  movedItem
-                );
+              layers.splice(
+                operation.target.sortable.previousIndex,
+                0,
+                movedItem
+              );
 
-                // Update the layers array for the specific imageKey
-                updatedTextures[selectedImageKey] = layers;
-                return updatedTextures;
-              }
-              // setLoadedTextures();
-              // setItems((items) => move(items, event));
-            );
+              updatedTextures[selectedImageKey] = layers;
+              return updatedTextures;
+            });
           }
         }}
       >
-        <div className="bg-gray-500 h-50">
-          {loadedTextures[selectedImageKey]?.map(
-            (el, index) => (
-              <SortableItem key={index} id={index} index={index} />
-            )
-            // <div onClick={() => setSelectedLayer(index)}>Layer {index}</div>
-          )}
+        <div className="bg-gray-500 h-50 flex flex-col overflow-auto">
+          {loadedTextures[selectedImageKey]?.map((el, index) => (
+            <SortableItem key={index} id={index} index={index} />
+          ))}
+          <button onClick={handleAddLayer}>+</button>
         </div>
       </DragDropProvider>
 

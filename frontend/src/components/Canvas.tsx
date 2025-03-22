@@ -35,9 +35,9 @@ const Canvas = () => {
     selectedColor,
     toolRef,
     sizeRef,
+    appRef,
   } = useImageContext();
   const parentRef = useRef(null);
-  const appRef = useRef(null);
   const { floodFill } = useFloodFill();
   const [checkeredTexture, setCheckeredTexture] = useState(null);
   const [texturesLoaded, setTexturesLoaded] = useState(false);
@@ -227,13 +227,14 @@ const Canvas = () => {
               }
             : layer
       );
+      console.log(newTextures);
       return newTextures;
     });
 
     // Clear drawing path for next time
     setDrawingPath([]);
   };
-  console.log(loadedTextures);
+
   // useEffect(() => {
   //   const app = appRef.current?.getApplication();
   //   if (!app) return;
@@ -296,6 +297,7 @@ const Canvas = () => {
     const app = appRef.current.getApplication();
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
+  console.log(loadedTextures);
   if (!texturesLoaded) return <div>Loading...</div>;
   return (
     <div
@@ -325,7 +327,7 @@ const Canvas = () => {
               height={textureHeight}
               interactive={false}
               /> */}
-          {loadedTextures.map((imageLayers, imgIndex) => (
+          {loadedTextures?.map((imageLayers, imgIndex) => (
             <pixiContainer
               key={imgIndex}
               visible={imgIndex === selectedImageKey}

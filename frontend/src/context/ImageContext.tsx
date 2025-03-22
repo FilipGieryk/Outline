@@ -13,6 +13,7 @@ export const ImageProvider = ({ children }) => {
   const [loadedTextures, setLoadedTextures] = useState([]);
   const toolRef = useRef("draw");
   const sizeRef = useRef(1);
+  const appRef = useRef(null);
   const [colors, setColors] = useState([
     "#000000",
     "#ff0000",
@@ -37,6 +38,7 @@ export const ImageProvider = ({ children }) => {
         setLoadedTextures,
         sizeRef,
         setColors,
+        appRef,
       }}
     >
       {children}
