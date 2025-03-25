@@ -48,15 +48,23 @@ const Canvas = () => {
   const textureWidth = originalTextureObj?.texture?.width || 2000;
   const textureHeight = originalTextureObj?.texture?.height || 1000;
 
-  const loadTexture = (url) =>
-    Assets.load(url).then((texture) => ({ url, texture, visible: true }));
+  const loadTexture = (url, index = null, name = null) => {
+    console.log(index);
+    return Assets.load(url).then((texture) => ({
+      url,
+      texture,
+      visible: true,
+      name: name || `layer${index}`,
+    }));
+  };
 
   const loadAllTextures = async () => {
     try {
+      console.log(processedImages);
       const textures2D = await Promise.all(
         processedImages.map(async (imageLayers) => {
           const textures = await Promise.all(
-            imageLayers.map((url) => loadTexture(url))
+            imageLayers.map((url, index) => loadTexture(url, index))
           );
           return textures;
         })
@@ -71,6 +79,7 @@ const Canvas = () => {
 
   useEffect(() => {
     if (!processedImages.length) return; // Avoid unnecessary calls
+    console.log(processedImages);
     loadAllTextures();
   }, [processedImages]);
 
@@ -79,10 +88,12 @@ const Canvas = () => {
     if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
 
     loadedTextures.forEach((imageLayers, imgIndex) => {
+      console.log("to db");
+      console.log(imageLayers);
       const record = {
         id: imgIndex, // keyPath value
         name: `container-${imgIndex}`,
-        images: imageLayers.map(({ url }) => ({ url })),
+        images: imageLayers.map(({ url, name }) => ({ url, name })),
         timestamp: Date.now(),
       };
       putRecord(record)
@@ -99,9 +110,9 @@ const Canvas = () => {
         const textures = await Promise.all(
           items.map(async (item) => {
             const imageLayers = await Promise.all(
-              item.images.map(async ({ url }) => {
+              item.images.map(async ({ url, name }) => {
                 try {
-                  const texture = await loadTexture(url);
+                  const texture = await loadTexture(url, undefined, name);
                   return texture;
                 } catch (error) {
                   console.error("Error loading texture from URL:", url, error);
@@ -109,9 +120,11 @@ const Canvas = () => {
                 }
               })
             );
+            console.log(imageLayers);
             return imageLayers;
           })
         );
+        console.log(textures);
         setLoadedTextures(textures);
       })
       .catch((error) =>
@@ -297,7 +310,6 @@ const Canvas = () => {
     const app = appRef.current.getApplication();
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
-  console.log(loadedTextures);
   if (!texturesLoaded) return <div>Loading...</div>;
   return (
     <div

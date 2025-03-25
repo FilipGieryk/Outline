@@ -22,22 +22,28 @@ export const Layers = () => {
 
   const toggleVisibility = (index) => {
     setLoadedTextures((prevTextures) => {
-      // Make a shallow copy of the outer array
       const updatedTextures = [...prevTextures];
 
-      // Make a shallow copy of the layers array for the current image key
       const layers = [...updatedTextures[selectedImageKey]];
 
-      // Toggle the visible property of the selected layer.
-      // Here we create a new object for that layer to maintain immutability.
       layers[index] = {
         ...layers[index],
         visible: !layers[index].visible,
       };
 
-      // Update the layers array for that image key
       updatedTextures[selectedImageKey] = layers;
 
+      return updatedTextures;
+    });
+  };
+  const handleLayerDelete = (index) => {
+    setLoadedTextures((prevTextures) => {
+      const updatedTextures = [...prevTextures];
+
+      const layers = [...updatedTextures[selectedImageKey]];
+
+      const final = layers.filter((el, layerIndex) => layerIndex != index);
+      updatedTextures[selectedImageKey] = final;
       return updatedTextures;
     });
   };
@@ -52,7 +58,8 @@ export const Layers = () => {
         }`}
       >
         <div onClick={() => toggleVisibility(index)}>eye</div>
-        <p onClick={() => setSelectedLayer(index)}>Item {id}</p>
+        <p onClick={() => setSelectedLayer(index)}>{id}</p>
+        <div onClick={() => handleLayerDelete(index)}>del</div>
       </div>
     );
   };
@@ -95,20 +102,19 @@ export const Layers = () => {
       <DragDropProvider
         onDragEnd={(event, manager) => {
           const { operation, canceled } = event;
+          console.log(operation);
+          const targetIndex = operation.target.sortable.previousIndex;
+          const initialIndex = operation.target.sortable.initialIndex;
+          setSelectedLayer(targetIndex);
+          console.log(selectedLayer);
           if (operation.target) {
-            console.log(operation.target.sortable.previousIndex);
             setLoadedTextures((prevTextures) => {
               const updatedTextures = [...prevTextures];
               const layers = [...updatedTextures[selectedImageKey]];
-              const [movedItem] = layers.splice(operation.source.id, 1);
-
-              layers.splice(
-                operation.target.sortable.previousIndex,
-                0,
-                movedItem
-              );
-
+              const [movedItem] = layers.splice(initialIndex, 1);
+              layers.splice(targetIndex, 0, movedItem);
               updatedTextures[selectedImageKey] = layers;
+              setSelectedLayer(targetIndex);
               return updatedTextures;
             });
           }
@@ -116,7 +122,7 @@ export const Layers = () => {
       >
         <div className="bg-gray-500 h-50 flex flex-col overflow-auto">
           {loadedTextures[selectedImageKey]?.map((el, index) => (
-            <SortableItem key={index} id={index} index={index} />
+            <SortableItem key={index} id={el.name} index={index} />
           ))}
           <button onClick={handleAddLayer}>+</button>
         </div>
