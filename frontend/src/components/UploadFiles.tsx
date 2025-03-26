@@ -1,4 +1,5 @@
 import useFileUpload from "../hooks/useFileUpload";
+import useIndexedDB from "../hooks/useIndexedDB";
 
 export const UploadFiles = () => {
   const {
@@ -15,6 +16,7 @@ export const UploadFiles = () => {
     deleteFile,
     handleFileChange,
   } = useFileUpload();
+  const { clearDatabase } = useIndexedDB();
 
   return (
     <>
@@ -63,7 +65,10 @@ export const UploadFiles = () => {
           accept="image/png, image/jpeg, image/webp"
         />
         <button
-          onClick={uploadFiles}
+          onClick={() => {
+            uploadFiles();
+            clearDatabase();
+          }}
           disabled={uploading || files.length === 0}
           className="bg-blue-500 text-white p-3 rounded-xl"
         >
