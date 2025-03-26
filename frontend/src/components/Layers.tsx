@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { DndContext } from "@dnd-kit/core";
+
 import { useSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
+import { RestrictToElement } from "@dnd-kit/dom/modifiers";
 import { RenderTexture } from "pixi.js";
 
 export const Layers = () => {
@@ -49,7 +51,15 @@ export const Layers = () => {
   };
 
   const SortableItem = ({ id, index }) => {
-    const sortable = useSortable({ id, index });
+    const sortable = useSortable({
+      id,
+      index,
+      modifiers: [
+        RestrictToElement.configure({
+          element: document.getElementById("layers"),
+        }),
+      ],
+    });
     return (
       <div
         ref={sortable.ref}
@@ -100,6 +110,8 @@ export const Layers = () => {
         ></img>
       </div>
       <DragDropProvider
+        // collisionDetection={closestCenter}
+        // modifiers={[restrictToParentElement]}
         onDragEnd={(event, manager) => {
           const { operation, canceled } = event;
           console.log(operation);
@@ -120,7 +132,10 @@ export const Layers = () => {
           }
         }}
       >
-        <div className="bg-gray-500 h-50 flex flex-col overflow-auto">
+        <div
+          id="layers"
+          className="bg-gray-500 h-50 flex flex-col overflow-auto"
+        >
           {loadedTextures[selectedImageKey]?.map((el, index) => (
             <SortableItem key={index} id={el.name} index={index} />
           ))}
