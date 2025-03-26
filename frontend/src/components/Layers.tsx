@@ -95,6 +95,7 @@ export const Layers = () => {
           texture: newRenderTexture,
           url: newUrl,
           visible: true,
+          name: `layer${updatedTextures[selectedImageKey].length}`,
         },
       ];
 
