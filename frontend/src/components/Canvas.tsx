@@ -9,13 +9,10 @@ import { extend, Application, useApplication } from "@pixi/react";
 import {
   Container,
   Sprite,
-  Texture,
   Graphics,
   RenderTexture,
   Assets,
   Rectangle,
-  Filter,
-  SCALE_MODE,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
@@ -37,6 +34,7 @@ const Canvas = () => {
     sizeRef,
     appRef,
   } = useImageContext();
+  // const app = useApplication();
   const parentRef = useRef(null);
   const { floodFill } = useFloodFill();
   const [checkeredTexture, setCheckeredTexture] = useState(null);
@@ -48,8 +46,10 @@ const Canvas = () => {
   const textureWidth = originalTextureObj?.texture?.width || 2000;
   const textureHeight = originalTextureObj?.texture?.height || 1000;
 
+  // to hook like file upload or handle filse
+
   const loadTexture = (url, index = null, name = null) => {
-    console.log(index);
+    console.log("loadTexture");
     return Assets.load(url).then((texture) => ({
       url,
       texture,
@@ -59,6 +59,7 @@ const Canvas = () => {
   };
 
   const loadAllTextures = async () => {
+    console.log("loadAllTextures");
     try {
       console.log(processedImages);
       const textures2D = await Promise.all(
@@ -77,34 +78,39 @@ const Canvas = () => {
     }
   };
 
+  // // stays here
   useEffect(() => {
-    if (!processedImages.length) return; // Avoid unnecessary calls
+    console.log("useeffect on processedImages");
+    // if (processedImages[0].length === 0) return; // Avoid unnecessary calls
     console.log(processedImages);
     loadAllTextures();
   }, [processedImages]);
 
-  // put texture urls to database
-  useEffect(() => {
-    if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
+  // // put texture urls to database
+  // useEffect(() => {
+  //   console.log("useeffect to put to db");
+  //   if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
+  //   console.log("usedPutting to database ");
 
-    loadedTextures.forEach((imageLayers, imgIndex) => {
-      console.log("to db");
-      console.log(imageLayers);
-      const record = {
-        id: imgIndex, // keyPath value
-        name: `container-${imgIndex}`,
-        images: imageLayers.map(({ url, name }) => ({ url, name })),
-        timestamp: Date.now(),
-      };
-      putRecord(record)
-        .then((id) => console.log(`Record updated with id ${id}`))
-        .catch((err) => console.error(`Error updating record:`, err));
-    });
-  }, [texturesLoaded, dbReady, loadedTextures]);
+  //   loadedTextures.forEach((imageLayers, imgIndex) => {
+  //     console.log("to db");
+  //     const record = {
+  //       id: imgIndex, // keyPath value
+  //       name: `container-${imgIndex}`,
+  //       images: imageLayers.map(({ url, name }) => ({ url, name })),
+  //       timestamp: Date.now(),
+  //     };
+  //     putRecord(record)
+  //       .then((id) => console.log(`Record updated with id ${id}`))
+  //       .catch((err) => console.error(`Error updating record:`, err));
+  //   });
+  // }, [texturesLoaded, dbReady, loadedTextures]);
 
-  // make textures from database urls
+  // // make textures from database urls
   useEffect(() => {
-    if (!dbReady) return;
+    console.log("useeeffect to get from database");
+    if (!dbReady || processedImages[0].length != 0) return;
+    console.log("getting from database");
     getAllRecords()
       .then(async (items) => {
         const textures = await Promise.all(
@@ -133,8 +139,9 @@ const Canvas = () => {
   }, [dbReady]);
 
   const [drawingPath, setDrawingPath] = useState<number[][]>([]);
-  const drawingRef = useRef(false);
+  // const drawingRef = useRef(false);
   const handlePointerDown = (event) => {
+    console.log("handlepoitnerdown");
     const pos = event.data.getLocalPosition(event.currentTarget);
     if (toolRef.current === "fill") {
       floodFill(pos.x, pos.y, selectedColor, appRef.current.getApplication());
@@ -143,12 +150,14 @@ const Canvas = () => {
     setDrawingPath([[pos.x, pos.y]]);
   };
   const handlePointerMove = (event) => {
+    console.log("handlepoitnermove");
     if (!drawingRef.current) return;
     const pos = event.data.getLocalPosition(event.currentTarget);
     setDrawingPath((prev) => [...prev, [pos.x, pos.y]]);
   };
 
   const handlePointerUp = () => {
+    console.log("handlepoitnerup");
     drawingRef.current = false;
     if (drawingPath.length > 0) {
       applyDrawingToLayer();
@@ -174,6 +183,7 @@ const Canvas = () => {
   );
 
   const applyDrawingToLayer = async () => {
+    console.log("appplydrawingtolayer");
     const app = appRef.current?.getApplication();
     if (!app || drawingPath.length === 0) return;
     console.log("Applying drawing to layer...");
@@ -248,37 +258,22 @@ const Canvas = () => {
     setDrawingPath([]);
   };
 
-  // useEffect(() => {
-  //   const app = appRef.current?.getApplication();
-  //   if (!app) return;
-  //   console.log("sss");
-
-  //   const graphics = new Graphics();
-  //   const size = 1; // Size of each checkered square
-  //   const rows = Math.ceil(textureHeight / size);
-  //   const cols = Math.ceil(textureWidth / size);
-
-  //   graphics.clear();
-  //   for (let y = 0; y < rows; y++) {
-  //     for (let x = 0; x < cols; x++) {
-  //       // Only draw the gray rectangles
-  //       if ((x + y) % 2 === 0) {
-  //         graphics.rect(x * size, y * size, size, size).fill(0xcccccc);
-  //       }
-  //     }
-  //   }
-
-  //   // Convert to a texture
-  //   const texture = app.renderer.generateTexture(graphics);
-  //   setCheckeredTexture(texture);
-  //   graphics.destroy();
-  // }, [selectedImageKey]);
-
   useEffect(() => {
-    if (!parentRef.current) return;
-    const { width, height } = parentRef.current.getBoundingClientRect();
-    setScaleFactor(Math.min(width / textureWidth, height / textureHeight));
-  }, [parentRef.current, textureWidth, textureHeight]);
+    console.log("change scalefactor");
+    if (!parentRef.current || !texturesLoaded) return;
+    console.log("wokr");
+    console.log(loadedTextures);
+    if (
+      textureWidth &&
+      textureHeight &&
+      textureWidth !== 2000 &&
+      textureHeight !== 1000
+    ) {
+      console.log("takatkaktaktaktkatkatk");
+      const { width, height } = parentRef.current.getBoundingClientRect();
+      setScaleFactor(Math.min(width / textureWidth, height / textureHeight));
+    }
+  }, [parentRef, textureWidth, textureHeight, texturesLoaded]);
 
   useLayoutEffect(() => {
     const handleWheel = (event) => {
@@ -306,101 +301,134 @@ const Canvas = () => {
   const computedWidth = textureWidth * scaleFactor;
   const computedHeight = textureHeight * scaleFactor;
   useEffect(() => {
+    console.log("change canvas size");
     if (!canvasRef.current || !appRef.current?.getApplication()) return;
     const app = appRef.current.getApplication();
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
+
+  const ImageComponent = ({ layerIndex, imgIndex }) => {
+    const { app } = useApplication();
+    const { width, height } = parentRef?.current.getBoundingClientRect();
+    const scale =
+      scaleFactor == 1
+        ? Math.min(width / textureWidth, height / textureHeight)
+        : scaleFactor;
+    return (
+      <pixiContainer key={layerIndex} visible={true}>
+        <pixiSprite
+          visible={loadedTextures[imgIndex]?.[layerIndex]?.visible === true}
+          texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
+          scale={{
+            x: scale,
+            y: scale,
+          }}
+        />
+      </pixiContainer>
+    );
+  };
+
   if (!texturesLoaded) return <div>Loading...</div>;
+
   return (
     <div
       ref={parentRef}
       className="col-start-2 col-end-3 row-start-3 row-end-4 overflow-auto flex justify-center items-center"
     >
-      <div
+      {/* <div
         style={{ width: computedWidth, height: computedHeight }}
         ref={canvasRef}
         className="relative"
-      >
-        <Application
-          resizeTo={canvasRef}
-          ref={appRef}
-          backgroundColor={0xffffff}
-        >
-          {/* <pixiSprite
-          texture={checkeredTexture}
-          x={
-            appRef.current?.getApplication().screen.width / 2 - textureWidth / 2
-            } // Align with texture
-            y={
-              appRef.current?.getApplication().screen.height / 2 -
-              textureHeight / 2
-              }
-              width={textureWidth}
-              height={textureHeight}
-              interactive={false}
-              /> */}
-          {loadedTextures?.map((imageLayers, imgIndex) => (
-            <pixiContainer
-              key={imgIndex}
-              visible={imgIndex === selectedImageKey}
-            >
-              {imageLayers.map((layer, layerIndex) => (
-                <pixiContainer key={layerIndex} visible={true}>
-                  <pixiSprite
-                    visible={
-                      loadedTextures[imgIndex]?.[layerIndex]?.visible === true
-                    }
-                    texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
-                    // anchor={0.5} // Center the sprite relative to its own dimensions
-                    // x={appRef.current?.getApplication()?.screen.width / 2} // Center on screen
-                    // y={appRef.current?.getApplication()?.screen.height / 2}
-                    scale={{
-                      x: scaleFactor,
-                      y: scaleFactor,
-                    }}
-                  />
+      > */}
+      <Application resizeTo={parentRef} backgroundColor={0xffffff}>
+        {/* <pixiSprite
+            texture={checkeredTexture}
+            // x={
+            //   appRef.current?.getApplication().screen.width / 2 -
+            //   textureWidth / 2
+            // } // Align with texture
+            // y={
+            //   appRef.current?.getApplication().screen.height / 2 -
+            //   textureHeight / 2
+            // }
+            width={textureWidth}
+            height={textureHeight}
+            interactive={false}
+          /> */}
 
-                  {(() => {
-                    if (
-                      imgIndex === selectedImageKey &&
-                      layerIndex === selectedLayer
-                    ) {
-                      return (
-                        <pixiGraphics
-                          x={
-                            (appRef.current?.getApplication()?.screen.width -
-                              textureWidth * scaleFactor) /
-                            2
-                          }
-                          y={
-                            (appRef.current?.getApplication()?.screen.height -
-                              textureHeight * scaleFactor) /
-                            2
-                          }
-                          draw={draw}
-                          interactive={true}
-                          onPointerDown={handlePointerDown}
-                          onPointerMove={handlePointerMove}
-                          onPointerUp={handlePointerUp}
-                          hitArea={
-                            new Rectangle(
-                              0,
-                              0,
-                              textureWidth * scaleFactor,
-                              textureHeight * scaleFactor
-                            )
-                          }
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
-                </pixiContainer>
-              ))}
-            </pixiContainer>
-          ))}
-        </Application>
-      </div>
+        {loadedTextures?.map((imageLayers, imgIndex) => (
+          <pixiContainer key={imgIndex} visible={imgIndex === selectedImageKey}>
+            {imageLayers.map((layer, layerIndex) => (
+              <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
+              // {/* <pixiGraphics
+              //     x={
+              //       (appRef.current?.getApplication()?.screen.width -
+              //         textureWidth * scaleFactor) /
+              //       2
+              //     }
+              //     y={
+              //       (appRef.current?.getApplication()?.screen.height -
+              //         textureHeight * scaleFactor) /
+              //       2
+              //     }
+              //     draw={draw}
+              //     interactive={true}
+              //     onPointerDown={handlePointerDown}
+              //     onPointerMove={handlePointerMove}
+              //     onPointerUp={handlePointerUp}
+              //     hitArea={
+              //       new Rectangle(
+              //         0,
+              //         0,
+              //         textureWidth * scaleFactor,
+              //         textureHeight * scaleFactor
+              //       )
+              //     }
+              //   /> */}
+
+              // {/* {(() => {
+              //     // console.log(app);
+              //     // if (!app) return null;
+              //     // console.log("app screen width:", app.screen.width);
+              //     if (
+              //       imgIndex === selectedImageKey &&
+              //       layerIndex === selectedLayer
+              //     ) {
+              //       return (
+              //         <pixiGraphics
+              //           x={
+              //             (appRef.current?.getApplication()?.screen.width -
+              //               textureWidth * scaleFactor) /
+              //             2
+              //           }
+              //           y={
+              //             (appRef.current?.getApplication()?.screen.height -
+              //               textureHeight * scaleFactor) /
+              //             2
+              //           }
+              //           draw={draw}
+              //           interactive={true}
+              //           onPointerDown={handlePointerDown}
+              //           onPointerMove={handlePointerMove}
+              //           onPointerUp={handlePointerUp}
+              //           hitArea={
+              //             new Rectangle(
+              //               0,
+              //               0,
+              //               textureWidth * scaleFactor,
+              //               textureHeight * scaleFactor
+              //             )
+              //           }
+              //         />
+              //       );
+              //     }
+              //     return null;
+              //   })()} */}
+            ))}
+          </pixiContainer>
+        ))}
+      </Application>
+      {/* </div> */}
     </div>
   );
 };
