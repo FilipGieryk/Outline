@@ -139,7 +139,7 @@ const Canvas = () => {
   }, [dbReady]);
 
   const [drawingPath, setDrawingPath] = useState<number[][]>([]);
-  // const drawingRef = useRef(false);
+  const drawingRef = useRef(false);
   const handlePointerDown = (event) => {
     console.log("handlepoitnerdown");
     const pos = event.data.getLocalPosition(event.currentTarget);
@@ -166,11 +166,11 @@ const Canvas = () => {
 
   const draw = useCallback(
     (g: Graphics) => {
+      console.log("draw");
       g.clear();
 
       const ctx = g.context;
       ctx.beginPath(); // Start a new path
-
       ctx.strokeStyle = selectedColor;
       ctx.strokeStyle.width = sizeRef.current;
       drawingPath.forEach(([x, y], i) => {
@@ -308,7 +308,6 @@ const Canvas = () => {
   }, [computedWidth, computedHeight]);
 
   const ImageComponent = ({ layerIndex, imgIndex }) => {
-    const { app } = useApplication();
     const { width, height } = parentRef?.current.getBoundingClientRect();
     const scale =
       scaleFactor == 1
@@ -324,6 +323,33 @@ const Canvas = () => {
             y: scale,
           }}
         />
+        {(() => {
+          // if (!app) return null;
+          // console.log("app screen width:", app.screen.width);
+          if (imgIndex === selectedImageKey && layerIndex === selectedLayer) {
+            console.log("sss");
+            return (
+              <pixiGraphics
+                x={0}
+                y={0}
+                draw={draw}
+                interactive={true}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                hitArea={
+                  new Rectangle(
+                    0,
+                    0,
+                    textureWidth * scale,
+                    textureHeight * scale
+                  )
+                }
+              />
+            );
+          }
+          return null;
+        })()}
       </pixiContainer>
     );
   };
@@ -386,10 +412,9 @@ const Canvas = () => {
               //     }
               //   /> */}
 
-              // {/* {(() => {
-              //     // console.log(app);
-              //     // if (!app) return null;
-              //     // console.log("app screen width:", app.screen.width);
+              // {(() => {
+              //     if (!app) return null;
+              //     console.log("app screen width:", app.screen.width);
               //     if (
               //       imgIndex === selectedImageKey &&
               //       layerIndex === selectedLayer
@@ -411,19 +436,19 @@ const Canvas = () => {
               //           onPointerDown={handlePointerDown}
               //           onPointerMove={handlePointerMove}
               //           onPointerUp={handlePointerUp}
-              //           hitArea={
-              //             new Rectangle(
-              //               0,
-              //               0,
-              //               textureWidth * scaleFactor,
-              //               textureHeight * scaleFactor
-              //             )
-              //           }
-              //         />
-              //       );
-              //     }
-              //     return null;
-              //   })()} */}
+              //            hitArea={
+              //              new Rectangle(
+              //                0,
+              //                0,
+              //                textureWidth * scaleFactor,
+              //                textureHeight * scaleFactor
+              //          )
+              //        }
+              //       />
+              //      );
+              //    }
+              //    return null;
+              // })()}
             ))}
           </pixiContainer>
         ))}
