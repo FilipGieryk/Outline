@@ -37,6 +37,7 @@ const Canvas = () => {
   // const app = useApplication();
   const parentRef = useRef(null);
   const { floodFill } = useFloodFill();
+
   const [checkeredTexture, setCheckeredTexture] = useState(null);
   const [texturesLoaded, setTexturesLoaded] = useState(false);
   const canvasRef = useRef(null);
@@ -156,11 +157,11 @@ const Canvas = () => {
     setDrawingPath((prev) => [...prev, [pos.x, pos.y]]);
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (app) => {
     console.log("handlepoitnerup");
     drawingRef.current = false;
     if (drawingPath.length > 0) {
-      applyDrawingToLayer();
+      applyDrawingToLayer(app);
     }
   };
 
@@ -182,9 +183,8 @@ const Canvas = () => {
     [drawingPath, textureWidth, textureHeight]
   );
 
-  const applyDrawingToLayer = async () => {
+  const applyDrawingToLayer = async (app) => {
     console.log("appplydrawingtolayer");
-    const app = appRef.current?.getApplication();
     if (!app || drawingPath.length === 0) return;
     console.log("Applying drawing to layer...");
 
@@ -232,7 +232,7 @@ const Canvas = () => {
       width: originalTexture.width,
       height: originalTexture.height,
     });
-
+    console.log("line 1");
     app.renderer.render(container, { renderTexture, clear: true });
 
     // Extract the final image
@@ -309,6 +309,7 @@ const Canvas = () => {
 
   const ImageComponent = ({ layerIndex, imgIndex }) => {
     const { width, height } = parentRef?.current.getBoundingClientRect();
+    const { app } = useApplication();
     const scale =
       scaleFactor == 1
         ? Math.min(width / textureWidth, height / textureHeight)
@@ -336,7 +337,7 @@ const Canvas = () => {
                 interactive={true}
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
+                onPointerUp={() => handlePointerUp(app)}
                 hitArea={
                   new Rectangle(
                     0,
