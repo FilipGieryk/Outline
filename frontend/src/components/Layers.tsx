@@ -15,6 +15,7 @@ export const Layers = () => {
     selectedLayer,
     colors,
     setSelectedColor,
+    selectedColor,
     loadedTextures,
     sizeRef,
     setColors,
@@ -103,7 +104,7 @@ export const Layers = () => {
     });
   };
   return (
-    <div className="bg-gray-400 w-full h-full row-start-3 col-start-3 mt-2">
+    <div className="bg-[#2f2f35] w-full h-full row-start-3 col-start-3 mt-2">
       <div className="bg-amber-100 w-[90%] h-50 m-auto my-4">
         <img
           src={loadedTextures[selectedImageKey]?.[selectedLayer]?.url}
@@ -135,7 +136,7 @@ export const Layers = () => {
       >
         <div
           id="layers"
-          className="bg-gray-500 h-50 flex flex-col overflow-auto"
+          className="bg-[#2f2f35] h-50 flex flex-col overflow-auto"
         >
           {loadedTextures[selectedImageKey]?.map((el, index) => (
             <SortableItem key={index} id={el.name} index={index} />
@@ -147,7 +148,10 @@ export const Layers = () => {
       <div className="bg-amber-400 h-50 flex gap-2 p-2">
         {colors.map((el, index) => (
           <div
-            className="w-10 h-10"
+            key={el}
+            className={`w-10 h-10 ${
+              selectedColor === el ? "border-4" : "border-0"
+            }`}
             style={{ backgroundColor: el }}
             onClick={() => setSelectedColor(el)}
           ></div>

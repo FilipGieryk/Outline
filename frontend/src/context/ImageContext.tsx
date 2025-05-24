@@ -11,7 +11,8 @@ export const ImageProvider = ({ children }) => {
   const [selectedImageKey, setSelectedImageKey] = useState(0);
   const [selectedLayer, setSelectedLayer] = useState(0);
   const [loadedTextures, setLoadedTextures] = useState([]);
-  const toolRef = useRef("draw");
+  // const toolRef = useRef("draw");
+  const [tool, setTool] = useState("draw");
   const sizeRef = useRef(1);
   const appRef = useRef(null);
   const [colors, setColors] = useState([
@@ -28,7 +29,9 @@ export const ImageProvider = ({ children }) => {
         setProcessedImages,
         selectedImageKey,
         setSelectedImageKey,
-        toolRef,
+        // toolRef,
+        tool,
+        setTool,
         selectedLayer,
         setSelectedLayer,
         colors,

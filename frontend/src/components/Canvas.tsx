@@ -30,10 +30,14 @@ const Canvas = () => {
     loadedTextures,
     setLoadedTextures,
     selectedColor,
-    toolRef,
+    tool,
     sizeRef,
     appRef,
   } = useImageContext();
+
+  // background gray squares
+  // x on images deletes them
+  // eraser shows what its gonna look like from erasing not at the end
   // const app = useApplication();
   const parentRef = useRef(null);
   const { floodFill } = useFloodFill();
@@ -144,7 +148,7 @@ const Canvas = () => {
   const handlePointerDown = (event) => {
     console.log("handlepoitnerdown");
     const pos = event.data.getLocalPosition(event.currentTarget);
-    if (toolRef.current === "fill") {
+    if (tool === "fill") {
       floodFill(pos.x, pos.y, selectedColor, appRef.current.getApplication());
     }
     drawingRef.current = true;
@@ -214,7 +218,7 @@ const Canvas = () => {
     const container = new Container();
 
     // Use the mask on the original sprite
-    if (toolRef.current === "erase") {
+    if (tool === "erase") {
       originalSprite.setMask({
         mask: maskGraphics,
         inverse: true,
@@ -223,7 +227,7 @@ const Canvas = () => {
 
     // Add the original sprite to the container
     container.addChild(originalSprite);
-    if (toolRef.current === "draw") {
+    if (tool === "draw") {
       container.addChild(maskGraphics);
     }
 
@@ -233,6 +237,7 @@ const Canvas = () => {
       height: originalTexture.height,
     });
     console.log("line 1");
+
     app.renderer.render(container, { renderTexture, clear: true });
 
     // Extract the final image
