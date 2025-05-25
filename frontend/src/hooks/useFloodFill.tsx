@@ -133,16 +133,17 @@ const useFloodFill = () => {
     );
   };
 
-  const floodFill = (x, y, newColor, app) => {
+  const floodFill = (x, y, newColor, app, scaleFactor) => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
 
     // Extract pixel data
     const pixels = app.renderer.extract.pixels(texture).pixels;
-    const width = texture.width;
-    const height = texture.height;
-    x = Math.floor(x + width / 2);
-    y = Math.floor(y + height / 2);
+    const width = Math.floor(texture.width * scaleFactor);
+    const height = Math.floor(texture.height * scaleFactor);
+
+    x = Math.floor(x);
+    y = Math.floor(y);
 
     const index = (y * width + x) * 4;
     const targetColor = {
@@ -157,14 +158,13 @@ const useFloodFill = () => {
     }
 
     // BFS queue for flood fill
+
     const queue = [{ x, y }];
     const visited = new Set();
     visited.add(`${x},${y}`);
-
     while (queue.length > 0) {
       const { x, y } = queue.shift();
       const i = (y * width + x) * 4;
-
       // Change pixel color
       pixels[i] = newColor.r;
       pixels[i + 1] = newColor.g;
@@ -235,7 +235,11 @@ const useFloodFill = () => {
       newTextures[selectedImageKey] = newTextures[selectedImageKey].map(
         (layer, index) =>
           index === selectedLayer
-            ? { texture: renderTexture, url: newUrl }
+            ? {
+                ...layer,
+                texture: renderTexture,
+                url: newUrl,
+              }
             : layer
       );
       return newTextures;

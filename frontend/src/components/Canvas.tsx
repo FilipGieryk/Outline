@@ -145,11 +145,12 @@ const Canvas = () => {
 
   const [drawingPath, setDrawingPath] = useState<number[][]>([]);
   const drawingRef = useRef(false);
-  const handlePointerDown = (event) => {
-    console.log("handlepoitnerdown");
+  const handlePointerDown = (event, app) => {
     const pos = event.data.getLocalPosition(event.currentTarget);
     if (tool === "fill") {
-      floodFill(pos.x, pos.y, selectedColor, appRef.current.getApplication());
+      console.log("befor");
+      floodFill(pos.x, pos.y, selectedColor, app, scaleFactor);
+      console.log("after");
     }
     drawingRef.current = true;
     setDrawingPath([[pos.x, pos.y]]);
@@ -340,7 +341,7 @@ const Canvas = () => {
                 y={0}
                 draw={draw}
                 interactive={true}
-                onPointerDown={handlePointerDown}
+                onPointerDown={(event) => handlePointerDown(event, app)}
                 onPointerMove={handlePointerMove}
                 onPointerUp={() => handlePointerUp(app)}
                 hitArea={
