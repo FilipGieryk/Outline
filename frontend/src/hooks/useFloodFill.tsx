@@ -137,10 +137,10 @@ const useFloodFill = () => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
 
-    // Extract pixel data
-    const pixels = app.renderer.extract.pixels(texture).pixels;
-    const width = Math.floor(texture.width * scaleFactor);
-    const height = Math.floor(texture.height * scaleFactor);
+    const width = texture.width;
+    const height = texture.height;
+
+    const { pixels } = app.renderer.extract.pixels(texture);
 
     x = Math.floor(x);
     y = Math.floor(y);
@@ -154,29 +154,27 @@ const useFloodFill = () => {
     };
 
     if (colorMatch(targetColor, newColor)) {
-      return; // Same color, no need to fill
+      return; // No need to fill
     }
-
-    // BFS queue for flood fill
 
     const queue = [{ x, y }];
     const visited = new Set();
     visited.add(`${x},${y}`);
+
     while (queue.length > 0) {
       const { x, y } = queue.shift();
       const i = (y * width + x) * 4;
-      // Change pixel color
+
       pixels[i] = newColor.r;
       pixels[i + 1] = newColor.g;
       pixels[i + 2] = newColor.b;
-      pixels[i + 3] = 255; // Full opacity
+      pixels[i + 3] = 255;
 
-      // Check neighbors
       const neighbors = [
-        { x: x + 1, y: y },
-        { x: x - 1, y: y },
-        { x: x, y: y + 1 },
-        { x: x, y: y - 1 },
+        { x: x + 1, y },
+        { x: x - 1, y },
+        { x, y: y + 1 },
+        { x, y: y - 1 },
       ];
 
       for (const neighbor of neighbors) {
@@ -203,32 +201,54 @@ const useFloodFill = () => {
         }
       }
     }
-    const createTextureFromPixels = (pixels, width, height) => {
-      // Create a new Canvas
+
+    const createScaledTextureFromPixels = (
+      pixels,
+      width,
+      height,
+      scaleFactor
+    ) => {
+      // 1. Create offscreen canvas at original size
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext("2d");
 
-      // Create ImageData from the pixels
+      // 2. Create and put image data
       const imageData = new ImageData(
         new Uint8ClampedArray(pixels),
         width,
         height
       );
-
-      // Put ImageData onto the canvas
       ctx.putImageData(imageData, 0, 0);
 
-      // Create a texture from the canvas
-      return Texture.from(canvas);
-    };
-    console.log(pixels);
+      // 3. Create scaled canvas
+      const scaledCanvas = document.createElement("canvas");
+      scaledCanvas.width = width * scaleFactor;
+      scaledCanvas.height = height * scaleFactor;
+      const scaledCtx = scaledCanvas.getContext("2d");
 
-    // Create new texture and apply it
-    const renderTexture = createTextureFromPixels(pixels, width, height);
-    console.log("yesss");
-    console.log(renderTexture);
+      // 4. Draw the original canvas into scaled canvas
+      scaledCtx.imageSmoothingEnabled = false; // if you want pixelated look
+      scaledCtx.drawImage(
+        canvas,
+        0,
+        0,
+        scaledCanvas.width,
+        scaledCanvas.height
+      );
+
+      // 5. Return PIXI texture
+      return Texture.from(scaledCanvas);
+    };
+
+    const renderTexture = createScaledTextureFromPixels(
+      pixels,
+      width,
+      height,
+      scaleFactor
+    );
+
     const newUrl = app.renderer.extract.base64(renderTexture);
     setLoadedTextures((prev) => {
       const newTextures = [...prev];
@@ -245,7 +265,10 @@ const useFloodFill = () => {
       return newTextures;
     });
   };
+
   return { floodFill };
 };
 
 export default useFloodFill;
+// color cahnging doesnt work
+// image shift when filling
