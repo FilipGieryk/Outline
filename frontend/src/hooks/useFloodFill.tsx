@@ -120,6 +120,27 @@ import { Texture, BaseTexture } from "pixi.js";
 // };
 
 // export default useFloodFill;
+
+function hexToRgba(hex) {
+  hex = hex.replace("#", "");
+
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+
+  const num = parseInt(hex, 16);
+
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+    a: 255,
+  };
+}
+
 const useFloodFill = () => {
   const { loadedTextures, setLoadedTextures, selectedImageKey, selectedLayer } =
     useImageContext();
@@ -136,14 +157,15 @@ const useFloodFill = () => {
   const floodFill = (x, y, newColor, app, scaleFactor) => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
+    console.log(newColor);
 
     const width = texture.width;
     const height = texture.height;
 
     const { pixels } = app.renderer.extract.pixels(texture);
 
-    x = Math.floor(x);
-    y = Math.floor(y);
+    x = Math.floor(x / scaleFactor);
+    y = Math.floor(y / scaleFactor);
 
     const index = (y * width + x) * 4;
     const targetColor = {
@@ -160,14 +182,14 @@ const useFloodFill = () => {
     const queue = [{ x, y }];
     const visited = new Set();
     visited.add(`${x},${y}`);
-
+    const newColorRgb = hexToRgba(newColor);
     while (queue.length > 0) {
       const { x, y } = queue.shift();
       const i = (y * width + x) * 4;
 
-      pixels[i] = newColor.r;
-      pixels[i + 1] = newColor.g;
-      pixels[i + 2] = newColor.b;
+      pixels[i] = newColorRgb.r;
+      pixels[i + 1] = newColorRgb.g;
+      pixels[i + 2] = newColorRgb.b;
       pixels[i + 3] = 255;
 
       const neighbors = [
@@ -202,12 +224,7 @@ const useFloodFill = () => {
       }
     }
 
-    const createScaledTextureFromPixels = (
-      pixels,
-      width,
-      height,
-      scaleFactor
-    ) => {
+    const createTextureFromPixels = (pixels, width, height) => {
       // 1. Create offscreen canvas at original size
       const canvas = document.createElement("canvas");
       canvas.width = width;
@@ -224,12 +241,12 @@ const useFloodFill = () => {
 
       // 3. Create scaled canvas
       const scaledCanvas = document.createElement("canvas");
-      scaledCanvas.width = width * scaleFactor;
-      scaledCanvas.height = height * scaleFactor;
+      scaledCanvas.width = width;
+      scaledCanvas.height = height;
       const scaledCtx = scaledCanvas.getContext("2d");
 
       // 4. Draw the original canvas into scaled canvas
-      scaledCtx.imageSmoothingEnabled = false; // if you want pixelated look
+
       scaledCtx.drawImage(
         canvas,
         0,
@@ -242,12 +259,7 @@ const useFloodFill = () => {
       return Texture.from(scaledCanvas);
     };
 
-    const renderTexture = createScaledTextureFromPixels(
-      pixels,
-      width,
-      height,
-      scaleFactor
-    );
+    const renderTexture = createTextureFromPixels(pixels, width, height);
 
     const newUrl = app.renderer.extract.base64(renderTexture);
     setLoadedTextures((prev) => {
@@ -270,5 +282,3 @@ const useFloodFill = () => {
 };
 
 export default useFloodFill;
-// color cahnging doesnt work
-// image shift when filling

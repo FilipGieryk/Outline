@@ -148,7 +148,7 @@ const Canvas = () => {
   const handlePointerDown = (event, app) => {
     const pos = event.data.getLocalPosition(event.currentTarget);
     if (tool === "fill") {
-      console.log("befor");
+      console.log(selectedColor);
       floodFill(pos.x, pos.y, selectedColor, app, scaleFactor);
       console.log("after");
     }
