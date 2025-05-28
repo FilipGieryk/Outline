@@ -13,6 +13,8 @@ import {
   RenderTexture,
   Assets,
   Rectangle,
+  Texture,
+  TilingSprite,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
@@ -20,7 +22,7 @@ import useIndexedDB from "../hooks/useIndexedDB";
 import { SCALE_MODES } from "@pixi/constants";
 import useFloodFill from "../hooks/useFloodFill";
 
-extend({ Container, Sprite, Graphics });
+extend({ Container, Sprite, Graphics, TilingSprite });
 
 const Canvas = () => {
   const {
@@ -188,6 +190,27 @@ const Canvas = () => {
     [drawingPath, textureWidth, textureHeight]
   );
 
+  const createCheckeredTexture = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 2;
+    canvas.height = 2;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, 1, 1);
+    ctx.fillRect(1, 1, 1, 1);
+
+    ctx.fillStyle = "lightgray";
+    ctx.fillRect(1, 0, 1, 1);
+    ctx.fillRect(0, 1, 1, 1);
+
+    return Texture.from(canvas);
+  };
+  useEffect(() => {
+    const texture = createCheckeredTexture();
+    setCheckeredTexture(texture);
+  }, []);
+
   const applyDrawingToLayer = async (app) => {
     console.log("appplydrawingtolayer");
     if (!app || drawingPath.length === 0) return;
@@ -237,8 +260,6 @@ const Canvas = () => {
       width: originalTexture.width,
       height: originalTexture.height,
     });
-    console.log("line 1");
-
     app.renderer.render(container, { renderTexture, clear: true });
 
     // Extract the final image
@@ -265,17 +286,13 @@ const Canvas = () => {
   };
 
   useEffect(() => {
-    console.log("change scalefactor");
     if (!parentRef.current || !texturesLoaded) return;
-    console.log("wokr");
-    console.log(loadedTextures);
     if (
       textureWidth &&
       textureHeight &&
       textureWidth !== 2000 &&
       textureHeight !== 1000
     ) {
-      console.log("takatkaktaktaktkatkatk");
       const { width, height } = parentRef.current.getBoundingClientRect();
       setScaleFactor(Math.min(width / textureWidth, height / textureHeight));
     }
@@ -288,11 +305,9 @@ const Canvas = () => {
       if (delta < 0) {
         // Zoom in
         setScaleFactor((prev) => Math.min(prev * zoomFactor, 5)); // Limit maximum zoom level
-        console.log("up");
       } else {
         // Zoom out
         setScaleFactor((prev) => Math.max(prev / zoomFactor, 0.2)); // Limit minimum zoom level
-        console.log("down");
       }
     };
 
@@ -388,6 +403,14 @@ const Canvas = () => {
             height={textureHeight}
             interactive={false}
           /> */}
+        {checkeredTexture && (
+          <pixiTilingSprite
+            texture={checkeredTexture}
+            width={computedWidth}
+            height={computedHeight}
+            tileScale={{ x: scaleFactor, y: scaleFactor }}
+          />
+        )}
 
         {loadedTextures?.map((imageLayers, imgIndex) => (
           <pixiContainer key={imgIndex} visible={imgIndex === selectedImageKey}>
