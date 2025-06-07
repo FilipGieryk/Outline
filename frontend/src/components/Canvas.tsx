@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -52,9 +53,10 @@ const Canvas = () => {
   const originalTextureObj = loadedTextures[selectedImageKey]?.[selectedLayer];
   const textureWidth = originalTextureObj?.texture?.width || 2000;
   const textureHeight = originalTextureObj?.texture?.height || 1000;
-  const containerRef = useRef(null);
-  const initialPosRef = useRef(null);
   const initialPositionsRef = useRef(new Map());
+  const currentPositionsRef = useRef(new Map());
+
+  const scaleRef = useRef(1);
 
   // to hook like file upload or handle filse
   console.log(scaleFactor);
@@ -344,32 +346,31 @@ const Canvas = () => {
   };
 
   const ContainerComponent = ({ imgIndex, children }) => {
-    const { width, height } = parentRef?.current.getBoundingClientRect();
-    const scale =
-      scaleFactor == 1
-        ? Math.min(width / textureWidth, height / textureHeight)
-        : scaleFactor;
+    const containerRef = useRef(null);
 
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!initialPositionsRef.current.has(imgIndex) && container) {
-        initialPositionsRef.current.set(imgIndex, {
-          x: container.position.x,
-          y: container.position.y,
-          scale: container.scale.x,
-        });
-      }
-    }, [imgIndex]);
-    const initialPos = initialPositionsRef.current.get(imgIndex);
-    const imageCenter = {
-      x: (width - textureWidth * scale) / 2,
-      y: (height - textureHeight * scale) / 2,
-    };
+    if (!initialPositionsRef.current.has(imgIndex)) {
+      const { width, height } = parentRef.current.getBoundingClientRect();
+      const scale = Math.min(width / textureWidth, height / textureHeight);
+      const initialX = (width - textureWidth * scale) / 2;
+      const initialY = (height - textureHeight * scale) / 2;
+
+      initialPositionsRef.current.set(imgIndex, {
+        x: initialX,
+        y: initialY,
+        scale: scale,
+      });
+      currentPositionsRef.current.set(imgIndex, {
+        x: initialX,
+        y: initialY,
+        scale: scale,
+      });
+    }
+    const currentPostion = currentPositionsRef.current.get(imgIndex);
 
     const onWheel = (event) => {
       const container = containerRef.current;
+      const initialPos = initialPositionsRef.current.get(imgIndex);
       const zoomFactor = 1.1;
-
       const parentBounds = parentRef.current.getBoundingClientRect();
 
       let newScale;
@@ -377,14 +378,10 @@ const Canvas = () => {
       if (event.deltaY < 0) {
         const localBefore = container.toLocal(event.global);
         newScale = Math.min(container.scale.x * zoomFactor, 5);
-
         container.scale.set(newScale);
         const localAfter = container.toLocal(event.global);
         container.position.x += (localAfter.x - localBefore.x) * newScale;
         container.position.y += (localAfter.y - localBefore.y) * newScale;
-        console.log(initialPos.x);
-        console.log(newScale);
-        setScaleFactor(newScale);
       } else {
         newScale = Math.max(container.scale.x / zoomFactor, initialPos.scale);
 
@@ -404,14 +401,17 @@ const Canvas = () => {
 
         const clampedX = Math.min(initialPos.x, calculatedPosX);
         const clampedY = Math.min(initialPos.y, calculatedPosY);
-        console.log(initialPos.x);
 
         container.scale.set(newScale);
         container.position.set(clampedX, clampedY);
-        setScaleFactor(newScale);
       }
+      currentPositionsRef.current.set(imgIndex, {
+        x: container.position.x,
+        y: container.position.y,
+        scale: container.scale,
+      });
+      scaleRef.current = newScale;
     };
-
     return (
       <pixiContainer
         ref={containerRef}
@@ -419,15 +419,14 @@ const Canvas = () => {
         visible={imgIndex === selectedImageKey}
         interactive={true}
         onWheel={onWheel}
-        scale={scale}
-        x={imageCenter.x}
-        y={imageCenter.y}
+        x={currentPostion.x}
+        y={currentPostion.y}
+        scale={currentPostion.scale}
       >
         {children}
       </pixiContainer>
     );
   };
-
   if (!texturesLoaded) return <div>Loading...</div>;
 
   return (
