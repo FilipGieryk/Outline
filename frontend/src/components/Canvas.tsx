@@ -155,17 +155,14 @@ const Canvas = () => {
   const handlePointerDown = (event, app) => {
     const pos = event.data.getLocalPosition(event.currentTarget);
     if (tool === "fill") {
-      console.log(selectedColor);
       floodFill(pos.x, pos.y, selectedColor, app, scaleFactor);
-      console.log("after");
     }
     drawingRef.current = true;
     setDrawingPath([[pos.x, pos.y]]);
   };
-  const handlePointerMove = (event) => {
-    console.log("handlepoitnermove");
-    if (!drawingRef.current) return;
-    const pos = event.data.getLocalPosition(event.currentTarget);
+  const handlePointerMove = (event, graphicsRef) => {
+    if (!drawingRef.current || !graphicsRef.current) return;
+    const pos = graphicsRef.current.toLocal(event.data.global);
     setDrawingPath((prev) => [...prev, [pos.x, pos.y]]);
   };
 
@@ -179,7 +176,6 @@ const Canvas = () => {
 
   const draw = useCallback(
     (g: Graphics) => {
-      console.log("draw");
       g.clear();
 
       const ctx = g.context;
@@ -217,23 +213,19 @@ const Canvas = () => {
   // }, []);
 
   const applyDrawingToLayer = async (app) => {
-    console.log("appplydrawingtolayer");
     if (!app || drawingPath.length === 0) return;
-    console.log("Applying drawing to layer...");
 
     const maskGraphics = new Graphics();
     const ctx = maskGraphics.context;
+    console.log(drawingPath);
 
-    // Set fill style and stroke color
     ctx.beginPath();
     ctx.strokeStyle = selectedColor;
-    ctx.strokeStyle.width = sizeRef.current / scaleFactor;
+    ctx.strokeStyle.width = sizeRef.current;
 
     drawingPath.forEach(([x, y], i) => {
-      const adjustedX = x / scaleFactor;
-      const adjustedY = y / scaleFactor;
-      if (i === 0) ctx.moveTo(adjustedX, adjustedY);
-      else ctx.lineTo(adjustedX, adjustedY);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
 
     ctx.stroke(); // Apply stroke
@@ -313,7 +305,7 @@ const Canvas = () => {
 
   const ImageComponent = ({ layerIndex, imgIndex }) => {
     const { app } = useApplication();
-
+    const graphicsRef = useRef(null);
     return (
       <pixiContainer
         key={layerIndex}
@@ -331,12 +323,13 @@ const Canvas = () => {
         />
         {imgIndex === selectedImageKey && layerIndex === selectedLayer && (
           <pixiGraphics
+            ref={graphicsRef}
             x={0}
             y={0}
             draw={draw}
             interactive={true}
             onPointerDown={(event) => handlePointerDown(event, app)}
-            onPointerMove={handlePointerMove}
+            onPointerMove={(event) => handlePointerMove(event, graphicsRef)}
             onPointerUp={() => handlePointerUp(app)}
             hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
           />
