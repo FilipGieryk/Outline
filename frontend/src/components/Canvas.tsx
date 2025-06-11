@@ -59,11 +59,12 @@ const Canvas = () => {
   const textureHeight = originalTextureObj?.texture?.height || 1000;
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
+  console.log("textures");
+  console.log(loadedTextures);
 
   const scaleRef = useRef(1);
 
   // to hook like file upload or handle filse
-  console.log(scaleFactor);
   const loadTexture = (url, index = null, name = null) => {
     console.log("loadTexture");
     return Assets.load(url).then((texture) => ({
@@ -87,6 +88,7 @@ const Canvas = () => {
         })
       );
       console.log(textures2D);
+
       setLoadedTextures(textures2D);
       setTexturesLoaded(true);
     } catch (error) {
@@ -329,6 +331,8 @@ const Canvas = () => {
       useDrawing(textureWidth, textureHeight);
     const { app } = useApplication();
     const graphicsRef = useRef(null);
+    console.log(loadedTextures[imgIndex]?.[layerIndex]);
+
     return (
       <pixiContainer
         key={layerIndex}

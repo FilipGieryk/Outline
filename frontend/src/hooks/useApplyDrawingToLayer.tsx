@@ -20,7 +20,6 @@ export const useApplyDrawingToLayer = () => {
 
   const applyDrawingToLayer = async (app, drawingPath, setDrawingPath) => {
     if (!app || drawingPath.length === 0) return;
-
     const maskGraphics = new Graphics();
     const ctx = maskGraphics.context;
 
@@ -81,7 +80,6 @@ export const useApplyDrawingToLayer = () => {
       );
       return newTextures;
     });
-
     // Clear drawing path for next time
     setDrawingPath([]);
   };

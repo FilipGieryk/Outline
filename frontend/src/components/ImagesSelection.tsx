@@ -8,13 +8,19 @@ export const ImagesSelection = () => {
 
   const createBlankTexture = () => {
     const canvas = document.createElement("canvas");
-    canvas.width = 300; // Set a reasonable default size
-    canvas.height = 300;
+    console.log(canvas);
+    canvas.width = 1000; // Set a reasonable default size
+    canvas.height = 1000;
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "white"; // Optional: Set a white background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const baseTexture = Texture.from(canvas);
-    return { url: canvas.toDataURL(), texture: baseTexture };
+    return {
+      url: canvas.toDataURL(),
+      texture: baseTexture,
+      name: "layer0",
+      visible: true,
+    };
   };
 
   const NewDrawing = () => {

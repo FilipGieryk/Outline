@@ -30,6 +30,7 @@ export const useDrawing = (textureWidth: any, textureHeight: any) => {
 
   const handlePointerUp = (app) => {
     console.log("handlepoitnerup");
+
     drawingRef.current = false;
     if (drawingPath.length > 0) {
       applyDrawingToLayer(app, drawingPath, setDrawingPath);
