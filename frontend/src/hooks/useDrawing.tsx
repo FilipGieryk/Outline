@@ -2,22 +2,20 @@ import { useCallback, useRef, useState } from "react";
 import { useImageContext } from "../context/ImageContext";
 import { Graphics } from "pixi.js";
 import { useApplyDrawingToLayer } from "./useApplyDrawingToLayer";
+import useFloodFill from "./useFloodFill";
 
-export const useDrawing = (
-  { scaleFactor, floodFill },
-  textureWidth: any,
-  textureHeight: any
-) => {
+export const useDrawing = (textureWidth: any, textureHeight: any) => {
   const { selectedColor, tool, sizeRef } = useImageContext();
   const drawingRef = useRef(false);
   const applyDrawingToLayer = useApplyDrawingToLayer();
+  const { floodFill } = useFloodFill();
   const [drawingPath, setDrawingPath] = useState<number[][]>([]);
 
   const handlePointerDown = (event, app, graphicsRef) => {
     const pos = graphicsRef.current.toLocal(event.data.global);
 
     if (tool === "fill") {
-      floodFill(pos.x, pos.y, selectedColor, app, scaleFactor);
+      floodFill(pos.x, pos.y, selectedColor, app);
     }
 
     drawingRef.current = true;
@@ -40,8 +38,6 @@ export const useDrawing = (
 
   const draw = useCallback(
     (g: Graphics) => {
-      g.clear();
-
       const ctx = g.context;
       ctx.beginPath(); // Start a new path
       ctx.strokeStyle = selectedColor;

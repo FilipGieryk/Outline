@@ -154,7 +154,7 @@ const useFloodFill = () => {
     );
   };
 
-  const floodFill = (x, y, newColor, app, scaleFactor) => {
+  const floodFill = (x, y, newColor, app) => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
 

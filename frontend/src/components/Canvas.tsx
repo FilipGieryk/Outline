@@ -25,6 +25,7 @@ import useFloodFill from "../hooks/useFloodFill";
 import CanvasLayout from "./CanvasLayout";
 import ContainerComponent from "./ContainerComponent";
 import ImageComponent from "./ImageComponent";
+import { useDrawing } from "../hooks/useDrawing";
 
 extend({ Container, Sprite, Graphics, TilingSprite });
 
@@ -154,7 +155,7 @@ const Canvas = () => {
   }, [dbReady]);
 
   // const [drawingPath, setDrawingPath] = useState<number[][]>([]);
-  const drawingRef = useRef(false);
+  // const drawingRef = useRef(false);
   // const handlePointerDown = (event, app, graphicsRef) => {
   //   const pos = graphicsRef.current.toLocal(event.data.global);
   //   if (tool === "fill") {
@@ -306,171 +307,161 @@ const Canvas = () => {
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
 
-  // const ImageComponent = ({ layerIndex, imgIndex }) => {
-  //   const { app } = useApplication();
-  //   const graphicsRef = useRef(null);
-  //   return (
-  //     <pixiContainer
-  //       key={layerIndex}
-  //       visible={true}
-  //       interactive={
-  //         imgIndex === selectedImageKey && layerIndex === selectedLayer
-  //       }
-  //       interactiveChildren={
-  //         imgIndex === selectedImageKey && layerIndex === selectedLayer
-  //       }
-  //     >
-  //       <pixiSprite
-  //         visible={loadedTextures[imgIndex]?.[layerIndex]?.visible === true}
-  //         texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
-  //       />
-  //       {imgIndex === selectedImageKey && layerIndex === selectedLayer && (
-  //         <pixiGraphics
-  //           ref={graphicsRef}
-  //           x={0}
-  //           y={0}
-  //           draw={draw}
-  //           interactive={true}
-  //           onPointerDown={(event) =>
-  //             handlePointerDown(event, app, graphicsRef)
-  //           }
-  //           onPointerMove={(event) => handlePointerMove(event, graphicsRef)}
-  //           onPointerUp={() => handlePointerUp(app)}
-  //           hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
-  //         />
-  //       )}
-  //     </pixiContainer>
-  //   );
-  // };
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
+  //
 
-  // const ContainerComponent = ({ imgIndex, children }) => {
-  //   const containerRef = useRef(null);
+  //
+  //
+  //
 
-  //   if (!initialPositionsRef.current.has(imgIndex)) {
-  //     const { width, height } = parentRef.current.getBoundingClientRect();
-  //     const scale = Math.min(width / textureWidth, height / textureHeight);
-  //     const initialX = (width - textureWidth * scale) / 2;
-  //     const initialY = (height - textureHeight * scale) / 2;
+  //
 
-  //     initialPositionsRef.current.set(imgIndex, {
-  //       x: initialX,
-  //       y: initialY,
-  //       scale: scale,
-  //     });
-  //     currentPositionsRef.current.set(imgIndex, {
-  //       x: initialX,
-  //       y: initialY,
-  //       scale: scale,
-  //     });
-  //   }
-  //   const currentPostion = currentPositionsRef.current.get(imgIndex);
+  const ImageComponent = ({ layerIndex, imgIndex }) => {
+    const { draw, handlePointerDown, handlePointerMove, handlePointerUp } =
+      useDrawing(textureWidth, textureHeight);
+    const { app } = useApplication();
+    const graphicsRef = useRef(null);
+    return (
+      <pixiContainer
+        key={layerIndex}
+        visible={true}
+        interactive={
+          imgIndex === selectedImageKey && layerIndex === selectedLayer
+        }
+        interactiveChildren={
+          imgIndex === selectedImageKey && layerIndex === selectedLayer
+        }
+      >
+        <pixiSprite
+          visible={loadedTextures[imgIndex]?.[layerIndex]?.visible === true}
+          texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
+        />
+        {imgIndex === selectedImageKey && layerIndex === selectedLayer && (
+          <pixiGraphics
+            ref={graphicsRef}
+            x={0}
+            y={0}
+            draw={draw}
+            interactive={true}
+            onPointerDown={(event) =>
+              handlePointerDown(event, app, graphicsRef)
+            }
+            onPointerMove={(event) => handlePointerMove(event, graphicsRef)}
+            onPointerUp={() => handlePointerUp(app)}
+            hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
+          />
+        )}
+      </pixiContainer>
+    );
+  };
 
-  //   const onWheel = (event) => {
-  //     const container = containerRef.current;
-  //     const initialPos = initialPositionsRef.current.get(imgIndex);
-  //     const zoomFactor = 1.1;
-  //     const parentBounds = parentRef.current.getBoundingClientRect();
+  const ContainerComponent = ({ imgIndex, children }) => {
+    const containerRef = useRef(null);
 
-  //     let newScale;
+    if (!initialPositionsRef.current.has(imgIndex)) {
+      const { width, height } = parentRef.current.getBoundingClientRect();
+      const scale = Math.min(width / textureWidth, height / textureHeight);
+      const initialX = (width - textureWidth * scale) / 2;
+      const initialY = (height - textureHeight * scale) / 2;
 
-  //     if (event.deltaY < 0) {
-  //       const localBefore = container.toLocal(event.global);
-  //       newScale = Math.min(container.scale.x * zoomFactor, 5);
-  //       container.scale.set(newScale);
-  //       const localAfter = container.toLocal(event.global);
-  //       container.position.x += (localAfter.x - localBefore.x) * newScale;
-  //       container.position.y += (localAfter.y - localBefore.y) * newScale;
-  //     } else {
-  //       newScale = Math.max(container.scale.x / zoomFactor, initialPos.scale);
+      initialPositionsRef.current.set(imgIndex, {
+        x: initialX,
+        y: initialY,
+        scale: scale,
+      });
+      currentPositionsRef.current.set(imgIndex, {
+        x: initialX,
+        y: initialY,
+        scale: scale,
+      });
+    }
+    const currentPostion = currentPositionsRef.current.get(imgIndex);
 
-  //       const bounds = container.getLocalBounds();
-  //       const scaledWidth = bounds.width * newScale;
-  //       const scaledHeight = bounds.height * newScale;
+    const onWheel = (event) => {
+      const container = containerRef.current;
+      const initialPos = initialPositionsRef.current.get(imgIndex);
+      const zoomFactor = 1.1;
+      const parentBounds = parentRef.current.getBoundingClientRect();
 
-  //       const calculatedPosX =
-  //         scaledWidth + container.position.x > parentBounds.width
-  //           ? container.position.x
-  //           : parentBounds.width - scaledWidth;
+      let newScale;
 
-  //       const calculatedPosY =
-  //         scaledHeight + container.position.y > parentBounds.height
-  //           ? container.position.y
-  //           : parentBounds.height - scaledHeight;
+      if (event.deltaY < 0) {
+        const localBefore = container.toLocal(event.global);
+        newScale = Math.min(container.scale.x * zoomFactor, 5);
+        container.scale.set(newScale);
+        const localAfter = container.toLocal(event.global);
+        container.position.x += (localAfter.x - localBefore.x) * newScale;
+        container.position.y += (localAfter.y - localBefore.y) * newScale;
+      } else {
+        newScale = Math.max(container.scale.x / zoomFactor, initialPos.scale);
 
-  //       const clampedX = Math.min(initialPos.x, calculatedPosX);
-  //       const clampedY = Math.min(initialPos.y, calculatedPosY);
+        const bounds = container.getLocalBounds();
+        const scaledWidth = bounds.width * newScale;
+        const scaledHeight = bounds.height * newScale;
 
-  //       container.scale.set(newScale);
-  //       container.position.set(clampedX, clampedY);
-  //     }
-  //     currentPositionsRef.current.set(imgIndex, {
-  //       x: container.position.x,
-  //       y: container.position.y,
-  //       scale: container.scale,
-  //     });
-  //     scaleRef.current = newScale;
-  //   };
-  //   return (
-  //     <pixiContainer
-  //       ref={containerRef}
-  //       key={imgIndex}
-  //       visible={imgIndex === selectedImageKey}
-  //       interactive={true}
-  //       onWheel={onWheel}
-  //       x={currentPostion.x}
-  //       y={currentPostion.y}
-  //       scale={currentPostion.scale}
-  //     >
-  //       {children}
-  //     </pixiContainer>
-  //   );
+        const calculatedPosX =
+          scaledWidth + container.position.x > parentBounds.width
+            ? container.position.x
+            : parentBounds.width - scaledWidth;
+
+        const calculatedPosY =
+          scaledHeight + container.position.y > parentBounds.height
+            ? container.position.y
+            : parentBounds.height - scaledHeight;
+
+        const clampedX = Math.min(initialPos.x, calculatedPosX);
+        const clampedY = Math.min(initialPos.y, calculatedPosY);
+
+        container.scale.set(newScale);
+        container.position.set(clampedX, clampedY);
+      }
+      currentPositionsRef.current.set(imgIndex, {
+        x: container.position.x,
+        y: container.position.y,
+        scale: container.scale,
+      });
+      scaleRef.current = newScale;
+    };
+    return (
+      <pixiContainer
+        ref={containerRef}
+        key={imgIndex}
+        visible={imgIndex === selectedImageKey}
+        interactive={true}
+        onWheel={onWheel}
+        x={currentPostion.x}
+        y={currentPostion.y}
+        scale={currentPostion.scale}
+      >
+        {children}
+      </pixiContainer>
+    );
+  };
   if (!texturesLoaded) return <div>Loading...</div>;
 
-  //   return (
-  //     <div
-  //       ref={parentRef}
-  //       className="col-start-2 col-end-3 row-start-3 row-end-4 overflow-auto flex justify-center items-center"
-  //     >
-  //       <Application resizeTo={parentRef} backgroundColor={0xffffff}>
-  //         {loadedTextures?.map((imageLayers, imgIndex) => (
-  //           <ContainerComponent imageLayers={imageLayers} imgIndex={imgIndex}>
-  //             {imageLayers.map((layer, layerIndex) => (
-  //               <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
-  //             ))}
-  //           </ContainerComponent>
-  //         ))}
-  //       </Application>
-  //     </div>
-  //   );
-  // };
-
   return (
-    <CanvasLayout parentRef={parentRef}>
-      {loadedTextures?.map((imageLayers, imgIndex) => (
-        <ContainerComponent
-          imgIndex={imgIndex}
-          textureWidth={textureWidth}
-          textureHeight={textureHeight}
-          parentRef={parentRef}
-          initialPositionsRef={initialPositionsRef}
-          currentPositionsRef={currentPositionsRef}
-          scaleRef={scaleRef}
-          selectedImageKey={selectedImageKey}
-        >
-          {imageLayers.map((layer, layerIndex) => (
-            <ImageComponent
-              layerIndex={layerIndex}
-              imgIndex={imgIndex}
-              selectedImageKey={selectedImageKey}
-              selectedLayer={selectedLayer}
-              loadedTextures={loadedTextures}
-              textureWidth={textureWidth}
-              textureHeight={textureHeight}
-            />
-          ))}
-        </ContainerComponent>
-      ))}
-    </CanvasLayout>
+    <div
+      ref={parentRef}
+      className="col-start-2 col-end-3 row-start-3 row-end-4 overflow-auto flex justify-center items-center"
+    >
+      <Application resizeTo={parentRef} backgroundColor={0xffffff}>
+        {loadedTextures?.map((imageLayers, imgIndex) => (
+          <ContainerComponent imgIndex={imgIndex}>
+            {imageLayers.map((layer, layerIndex) => (
+              <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
+            ))}
+          </ContainerComponent>
+        ))}
+      </Application>
+    </div>
   );
 };
 
