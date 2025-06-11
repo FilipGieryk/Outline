@@ -157,15 +157,14 @@ const useFloodFill = () => {
   const floodFill = (x, y, newColor, app, scaleFactor) => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
-    console.log(newColor);
 
     const width = texture.width;
     const height = texture.height;
 
     const { pixels } = app.renderer.extract.pixels(texture);
 
-    x = Math.floor(x / scaleFactor);
-    y = Math.floor(y / scaleFactor);
+    x = Math.floor(x);
+    y = Math.floor(y);
 
     const index = (y * width + x) * 4;
     const targetColor = {
