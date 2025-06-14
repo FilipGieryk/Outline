@@ -37,8 +37,6 @@ export const ImagesSelection = () => {
       width: bounds.width,
       height: bounds.height,
     });
-    console.log(bounds);
-    console.log(container.x);
 
     const originalScale = container.scale.x;
     const originalPosition = { x: container.x, y: container.y };
