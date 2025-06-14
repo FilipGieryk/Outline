@@ -12,6 +12,7 @@ export const ImageProvider = ({ children }) => {
   const [selectedLayer, setSelectedLayer] = useState(0);
   const [loadedTextures, setLoadedTextures] = useState([]);
   // const toolRef = useRef("draw");
+  const containerRefs = useRef(new Map());
   const [tool, setTool] = useState("draw");
   const sizeRef = useRef(1);
   const appRef = useRef(null);
@@ -42,6 +43,7 @@ export const ImageProvider = ({ children }) => {
         sizeRef,
         setColors,
         appRef,
+        containerRefs,
       }}
     >
       {children}

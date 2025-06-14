@@ -1,14 +1,18 @@
 import { useEffect } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { Texture } from "pixi.js";
+import { RenderTexture, Sprite, Texture } from "pixi.js";
 
 export const ImagesSelection = () => {
-  const { loadedTextures, setLoadedTextures, setSelectedImageKey } =
-    useImageContext();
+  const {
+    loadedTextures,
+    setLoadedTextures,
+    setSelectedImageKey,
+    containerRefs,
+    appRef,
+  } = useImageContext();
 
   const createBlankTexture = () => {
     const canvas = document.createElement("canvas");
-    console.log(canvas);
     canvas.width = 1000; // Set a reasonable default size
     canvas.height = 1000;
     const ctx = canvas.getContext("2d");
@@ -21,6 +25,44 @@ export const ImagesSelection = () => {
       name: "layer0",
       visible: true,
     };
+  };
+
+  function downloadPixiContainerImage(
+    renderer,
+    container,
+    filename = "merged.png"
+  ) {
+    const bounds = container.getLocalBounds();
+    const renderTexture = RenderTexture.create({
+      width: bounds.width,
+      height: bounds.height,
+    });
+    console.log(bounds);
+    console.log(container.x);
+
+    const originalScale = container.scale.x;
+    const originalPosition = { x: container.x, y: container.y };
+    container.position.set(-bounds.x, -bounds.y);
+    container.scale.set(1);
+
+    renderer.render(container, { renderTexture });
+
+    container.position.set(originalPosition.x, originalPosition.y);
+    container.scale.set(originalScale);
+    const canvas = renderer.extract.canvas(renderTexture);
+
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
+  const deleteImg = (index) => {
+    const result = confirm("Are you sure?");
+    if (result) {
+      setLoadedTextures((prev) => prev.filter((_, i) => i !== index));
+      setSelectedImageKey(0);
+    }
   };
 
   const NewDrawing = () => {
@@ -44,9 +86,23 @@ export const ImagesSelection = () => {
               onClick={() => setSelectedImageKey(index)}
             />
             <button
-              onClick={() =>
-                setLoadedTextures((prev) => prev.filter((_, i) => i !== index))
-              }
+              onClick={() => {
+                const container = containerRefs.current.get(index);
+                const app = appRef.current;
+                if (container) {
+                  downloadPixiContainerImage(
+                    app.renderer,
+                    container,
+                    `image-${index}.png`
+                  );
+                }
+              }}
+              className="absolute top-1 right-5 text-black px-2 py-0.5 text-xs cursor-pointer"
+            >
+              s
+            </button>
+            <button
+              onClick={() => deleteImg(index)}
               className="absolute top-1 right-1 text-black px-2 py-0.5 text-xs cursor-pointer"
             >
               x

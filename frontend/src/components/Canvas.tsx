@@ -59,6 +59,7 @@ const Canvas = () => {
   const textureHeight = originalTextureObj?.texture?.height || 1000;
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
+  const containerRefs = useRef(new Map());
   console.log("textures");
   console.log(loadedTextures);
 
@@ -330,6 +331,7 @@ const Canvas = () => {
     const { draw, handlePointerDown, handlePointerMove, handlePointerUp } =
       useDrawing(textureWidth, textureHeight);
     const { app } = useApplication();
+    appRef.current = app;
     const graphicsRef = useRef(null);
     console.log(loadedTextures[imgIndex]?.[layerIndex]);
 
@@ -367,8 +369,19 @@ const Canvas = () => {
     );
   };
 
-  const ContainerComponent = ({ imgIndex, children }) => {
+  const ContainerComponent = ({ imgIndex, children, containerRefCallback }) => {
     const containerRef = useRef(null);
+
+    const { containerRefs } = useImageContext();
+    useEffect(() => {
+      if (containerRef.current) {
+        containerRefs.current.set(imgIndex, containerRef.current);
+        console.log(containerRef.current);
+      }
+      return () => {
+        containerRefs.current.delete(imgIndex); // cleanup
+      };
+    }, [imgIndex]);
 
     if (!initialPositionsRef.current.has(imgIndex)) {
       const { width, height } = parentRef.current.getBoundingClientRect();
@@ -458,7 +471,12 @@ const Canvas = () => {
     >
       <Application resizeTo={parentRef} backgroundColor={0xffffff}>
         {loadedTextures?.map((imageLayers, imgIndex) => (
-          <ContainerComponent imgIndex={imgIndex}>
+          <ContainerComponent
+            imgIndex={imgIndex}
+            containerRefCallback={(ref) =>
+              containerRefs.current.set(imgIndex, ref)
+            }
+          >
             {imageLayers.map((layer, layerIndex) => (
               <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
             ))}

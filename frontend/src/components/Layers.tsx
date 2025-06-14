@@ -85,7 +85,8 @@ export const Layers = () => {
 
     const newRenderTexture = RenderTexture.create({ width, height });
 
-    const app = appRef.current?.getApplication();
+    const app = appRef.current;
+
     const newUrl = await app.renderer.extract.base64(newRenderTexture);
 
     setLoadedTextures((prevTextures) => {
