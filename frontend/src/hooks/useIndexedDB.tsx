@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 const useIndexedDB = () => {
   const dbRef = useRef(null);
-  const [dbReady, setDbReady] = useState(false);
-  const [dbItems, setDbItems] = useState(null);
+  const [dbReady, setDbReady] = useState<boolean>(false);
+  const [dbItems, setDbItems] = useState<any[]>([]);
   useEffect(() => {
     // Bump the version to force onupgradeneeded if necessary
     const request = indexedDB.open("pixiljs", 2); // incremented version number

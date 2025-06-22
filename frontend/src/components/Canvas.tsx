@@ -1,3 +1,4 @@
+import type { FederatedPointerEvent } from "@pixi/events";
 import React, {
   useCallback,
   useEffect,
@@ -46,7 +47,7 @@ const Canvas = () => {
   // x on images deletes them
   // eraser shows what its gonna look like from erasing not at the end
   // const app = useApplication();
-  const parentRef = useRef(null);
+  const parentRef = useRef<HTMLDivElement>(null);
   const { floodFill } = useFloodFill();
 
   const [checkeredTexture, setCheckeredTexture] = useState(null);
@@ -332,8 +333,7 @@ const Canvas = () => {
       useDrawing(textureWidth, textureHeight);
     const { app } = useApplication();
     appRef.current = app;
-    const graphicsRef = useRef(null);
-    console.log(loadedTextures[imgIndex]?.[layerIndex]);
+    const graphicsRef = useRef<Graphics | null>(null);
 
     return (
       <pixiContainer
@@ -357,10 +357,12 @@ const Canvas = () => {
             y={0}
             draw={draw}
             interactive={true}
-            onPointerDown={(event) =>
-              handlePointerDown(event, app, graphicsRef)
+            onPointerDown={(event: FederatedPointerEvent) =>
+              handlePointerDown(event, app, graphicsRef.current)
             }
-            onPointerMove={(event) => handlePointerMove(event, graphicsRef)}
+            onPointerMove={(event: FederatedPointerEvent) =>
+              handlePointerMove(event, graphicsRef.current)
+            }
             onPointerUp={() => handlePointerUp(app)}
             hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
           />
@@ -384,7 +386,7 @@ const Canvas = () => {
     }, [imgIndex]);
 
     if (!initialPositionsRef.current.has(imgIndex)) {
-      const { width, height } = parentRef.current.getBoundingClientRect();
+      const { width, height } = parentRef.current?.getBoundingClientRect();
       const scale = Math.min(width / textureWidth, height / textureHeight);
       const initialX = (width - textureWidth * scale) / 2;
       const initialY = (height - textureHeight * scale) / 2;
@@ -402,8 +404,9 @@ const Canvas = () => {
     }
     const currentPostion = currentPositionsRef.current.get(imgIndex);
 
-    const onWheel = (event) => {
+    const onWheel = (event: FederatedPointerEvent) => {
       const container = containerRef.current;
+      if (!container || !parentRef.current) return;
       const initialPos = initialPositionsRef.current.get(imgIndex);
       const zoomFactor = 1.1;
       const parentBounds = parentRef.current.getBoundingClientRect();

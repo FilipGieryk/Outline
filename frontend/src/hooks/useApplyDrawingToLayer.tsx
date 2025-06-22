@@ -1,4 +1,5 @@
 import {
+  Application,
   Container,
   Graphics,
   RenderTexture,
@@ -6,6 +7,7 @@ import {
   Sprite,
 } from "pixi.js";
 import { useImageContext } from "../context/ImageContext";
+import { Dispatch, SetStateAction } from "react";
 
 export const useApplyDrawingToLayer = () => {
   const {
@@ -18,8 +20,14 @@ export const useApplyDrawingToLayer = () => {
     tool,
   } = useImageContext();
 
-  const applyDrawingToLayer = async (app, drawingPath, setDrawingPath) => {
+  const applyDrawingToLayer = async (
+    app: Application,
+    drawingPath: number[][],
+    setDrawingPath: Dispatch<SetStateAction<number[][]>>
+  ) => {
+    console.log("test");
     if (!app || drawingPath.length === 0) return;
+    console.log("test");
     const maskGraphics = new Graphics();
     const ctx = maskGraphics.context;
 

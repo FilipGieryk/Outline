@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Canvas from "../components/Canvas";
 
 import { Layers } from "../components/Layers";

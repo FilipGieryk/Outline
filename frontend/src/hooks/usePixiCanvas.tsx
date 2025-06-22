@@ -6,7 +6,6 @@ const usePixiCanvas = () => {
   const appRef = useRef(null);
 
   useEffect(() => {
-    // Initialize PixiJS application
     appRef.current = new PIXI.Application({
       view: canvasRef.current,
       width: window.innerWidth,

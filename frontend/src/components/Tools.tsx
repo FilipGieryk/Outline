@@ -1,5 +1,4 @@
 import { useImageContext } from "../context/ImageContext";
-import useCanvas from "../hooks/useCanvas";
 
 export const Tools = () => {
   const { tool, setTool } = useImageContext();

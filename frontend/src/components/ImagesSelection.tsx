@@ -16,6 +16,7 @@ export const ImagesSelection = () => {
     canvas.width = 1000; // Set a reasonable default size
     canvas.height = 1000;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     ctx.fillStyle = "white"; // Optional: Set a white background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const baseTexture = Texture.from(canvas);
@@ -30,7 +31,7 @@ export const ImagesSelection = () => {
   function downloadPixiContainerImage(
     renderer,
     container,
-    filename = "merged.png"
+    filename: string = "merged.png"
   ) {
     const bounds = container.getLocalBounds();
     const renderTexture = RenderTexture.create({
@@ -55,7 +56,7 @@ export const ImagesSelection = () => {
     link.click();
   }
 
-  const deleteImg = (index) => {
+  const deleteImg = (index: number) => {
     const result = confirm("Are you sure?");
     if (result) {
       setLoadedTextures((prev) => prev.filter((_, i) => i !== index));

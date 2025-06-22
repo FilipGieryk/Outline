@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
 import { useImageContext } from "../context/ImageContext";
 
 import { useSortable } from "@dnd-kit/react/sortable";
 import { DragDropProvider } from "@dnd-kit/react";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
+
 import { RestrictToElement } from "@dnd-kit/dom/modifiers";
 import { RenderTexture } from "pixi.js";
 
 export const Layers = () => {
   const {
-    processedImages,
     selectedImageKey,
     setSelectedLayer,
     selectedLayer,
@@ -139,7 +137,7 @@ export const Layers = () => {
           id="layers"
           className="bg-[#2f2f35] h-50 flex flex-col overflow-auto"
         >
-          {loadedTextures[selectedImageKey]?.map((el, index) => (
+          {loadedTextures[selectedImageKey]?.map((el, index: number) => (
             <SortableItem key={index} id={el.name} index={index} />
           ))}
           <button onClick={handleAddLayer}>+</button>

@@ -4,7 +4,6 @@ import useIndexedDB from "../hooks/useIndexedDB";
 export const HomePage = () => {
   const { dbItems, clearDatabase } = useIndexedDB();
 
-  // on first button add fucntion to clear database
 
   return (
     <div className="flex flex-col gap-10 items-center mt-15">

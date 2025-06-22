@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useImageContext } from "../context/ImageContext.tsx";
 
 const useFileUpload = () => {
-  const { setProcessedImages, processedImages } = useImageContext();
+  const { setProcessedImages } = useImageContext();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
