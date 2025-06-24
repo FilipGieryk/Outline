@@ -1,31 +1,18 @@
 import type { FederatedPointerEvent } from "@pixi/events";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { extend, Application, useApplication } from "@pixi/react";
 import {
   Container,
   Sprite,
   Graphics,
-  RenderTexture,
   Assets,
   Rectangle,
-  Texture,
   TilingSprite,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
 import useIndexedDB from "../hooks/useIndexedDB";
-import { SCALE_MODES } from "@pixi/constants";
-import useFloodFill from "../hooks/useFloodFill";
-import CanvasLayout from "./CanvasLayout";
-import ContainerComponent from "./ContainerComponent";
-import ImageComponent from "./ImageComponent";
+
 import { useDrawing } from "../hooks/useDrawing";
 
 extend({ Container, Sprite, Graphics, TilingSprite });
@@ -37,9 +24,6 @@ const Canvas = () => {
     selectedLayer,
     loadedTextures,
     setLoadedTextures,
-    selectedColor,
-    tool,
-    sizeRef,
     appRef,
   } = useImageContext();
 
@@ -48,9 +32,7 @@ const Canvas = () => {
   // eraser shows what its gonna look like from erasing not at the end
   // const app = useApplication();
   const parentRef = useRef<HTMLDivElement>(null);
-  const { floodFill } = useFloodFill();
 
-  const [checkeredTexture, setCheckeredTexture] = useState(null);
   const [texturesLoaded, setTexturesLoaded] = useState(false);
   const canvasRef = useRef(null);
   const { dbReady, putRecord, getAllRecords } = useIndexedDB();
@@ -64,7 +46,7 @@ const Canvas = () => {
   const scaleRef = useRef(1);
 
   // to hook like file upload or handle filse
-  const loadTexture = (url, index = null, name = null) => {
+  const loadTexture = (url: string, index?: number, name?: string) => {
     return Assets.load(url).then((texture) => ({
       url,
       texture,
@@ -361,7 +343,7 @@ const Canvas = () => {
     );
   };
 
-  const ContainerComponent = ({ imgIndex, children, containerRefCallback }) => {
+  const ContainerComponent = ({ imgIndex, children }) => {
     const containerRef = useRef(null);
 
     const { containerRefs } = useImageContext();
@@ -470,7 +452,7 @@ const Canvas = () => {
               containerRefs.current.set(imgIndex, ref)
             }
           >
-            {imageLayers.map((layer, layerIndex) => (
+            {imageLayers.map((_, layerIndex) => (
               <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
             ))}
           </ContainerComponent>

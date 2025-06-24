@@ -43,7 +43,7 @@ export const Layers = () => {
 
       const layers = [...updatedTextures[selectedImageKey]];
 
-      const final = layers.filter((el, layerIndex) => layerIndex != index);
+      const final = layers.filter((_, layerIndex) => layerIndex != index);
       updatedTextures[selectedImageKey] = final;
       return updatedTextures;
     });
@@ -113,8 +113,8 @@ export const Layers = () => {
       <DragDropProvider
         // collisionDetection={closestCenter}
         // modifiers={[restrictToParentElement]}
-        onDragEnd={(event, manager) => {
-          const { operation, canceled } = event;
+        onDragEnd={(event) => {
+          const { operation } = event;
           console.log(operation);
           const targetIndex = operation.target.sortable.previousIndex;
           const initialIndex = operation.target.sortable.initialIndex;
@@ -145,7 +145,7 @@ export const Layers = () => {
       </DragDropProvider>
 
       <div className="bg-amber-400 h-50 flex gap-2 p-2">
-        {colors.map((el, index) => (
+        {colors.map((el) => (
           <div
             key={el}
             className={`w-10 h-10 ${

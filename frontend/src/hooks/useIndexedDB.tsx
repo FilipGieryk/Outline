@@ -22,8 +22,6 @@ const useIndexedDB = () => {
       console.log("Database opened successfully", db);
       dbRef.current = db;
       setDbReady(true);
-      const transaction = db.transaction("myStore", "readwrite");
-      const store = transaction.objectStore("myStore");
     };
 
     request.onerror = function (event) {
@@ -57,7 +55,7 @@ const useIndexedDB = () => {
   };
 
   const clearDatabase = () => {
-    if (!dbReady) return;
+    if (!dbReady || !dbRef.current) return;
     const transaction = dbRef.current.transaction("myStore", "readwrite");
     const store = transaction.objectStore("myStore");
     const clearRequest = store.clear();

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { RenderTexture, Sprite, Texture } from "pixi.js";
+import { RenderTexture, Texture } from "pixi.js";
 
 export const ImagesSelection = () => {
   const {
@@ -70,7 +70,8 @@ export const ImagesSelection = () => {
   };
   useEffect(() => {
     if (!loadedTextures || loadedTextures.length === 0) {
-      setLoadedTextures([[createBlankTexture()]]);
+      const newTexture = createBlankTexture();
+      setLoadedTextures([[newTexture]]);
     }
   }, [loadedTextures, setLoadedTextures]);
   return (

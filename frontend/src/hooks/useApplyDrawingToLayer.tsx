@@ -7,7 +7,7 @@ import {
   Sprite,
 } from "pixi.js";
 import { useImageContext } from "../context/ImageContext";
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 export const useApplyDrawingToLayer = () => {
   const {

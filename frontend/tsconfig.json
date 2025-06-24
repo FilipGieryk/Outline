@@ -1,4 +1,16 @@
 {
+  "compilerOptions": {
+    "jsx": "react-jsx", // ✅ Required for React
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "noEmit": false
+  },
+  "include": ["src"],
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
