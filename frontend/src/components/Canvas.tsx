@@ -61,14 +61,10 @@ const Canvas = () => {
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
   const containerRefs = useRef(new Map());
-  console.log("textures");
-  console.log(loadedTextures);
-
   const scaleRef = useRef(1);
 
   // to hook like file upload or handle filse
   const loadTexture = (url, index = null, name = null) => {
-    console.log("loadTexture");
     return Assets.load(url).then((texture) => ({
       url,
       texture,
@@ -78,7 +74,6 @@ const Canvas = () => {
   };
 
   const loadAllTextures = async () => {
-    console.log("loadAllTextures");
     try {
       console.log(processedImages);
       const textures2D = await Promise.all(
@@ -89,7 +84,6 @@ const Canvas = () => {
           return textures;
         })
       );
-      console.log(textures2D);
 
       setLoadedTextures(textures2D);
       setTexturesLoaded(true);
@@ -100,41 +94,19 @@ const Canvas = () => {
 
   // // stays here
   useEffect(() => {
-    console.log("useeffect on processedImages");
-    // if (processedImages[0].length === 0) return; // Avoid unnecessary calls
-    console.log(processedImages);
     loadAllTextures();
   }, [processedImages]);
 
-  // // put texture urls to database
-  // useEffect(() => {
-  //   console.log("useeffect to put to db");
-  //   if (!dbReady || !texturesLoaded || loadedTextures.length === 1) return;
-  //   console.log("usedPutting to database ");
-
-  //   loadedTextures.forEach((imageLayers, imgIndex) => {
-  //     console.log("to db");
-  //     const record = {
-  //       id: imgIndex, // keyPath value
-  //       name: `container-${imgIndex}`,
-  //       images: imageLayers.map(({ url, name }) => ({ url, name })),
-  //       timestamp: Date.now(),
-  //     };
-  //     putRecord(record)
-  //       .then((id) => console.log(`Record updated with id ${id}`))
-  //       .catch((err) => console.error(`Error updating record:`, err));
-  //   });
-  // }, [texturesLoaded, dbReady, loadedTextures]);
-
-  // // make textures from database urls
   useEffect(() => {
     console.log("useeeffect to get from database");
     if (!dbReady || processedImages[0].length != 0) return;
     console.log("getting from database");
     getAllRecords()
       .then(async (items) => {
+        console.log(items);
         const textures = await Promise.all(
           items.map(async (item) => {
+            console.log(item);
             const imageLayers = await Promise.all(
               item.images.map(async ({ url, name }) => {
                 try {
@@ -150,13 +122,31 @@ const Canvas = () => {
             return imageLayers;
           })
         );
-        console.log(textures);
         setLoadedTextures(textures);
       })
       .catch((error) =>
         console.error("Failed to fetch textures from IndexedDB:", error)
       );
   }, [dbReady]);
+
+  useEffect(() => {
+    if (!dbReady || !texturesLoaded || loadedTextures.length === 0) return;
+    loadedTextures.forEach((imageLayers, imgIndex) => {
+      console.log("to db");
+      console.log(imageLayers);
+      const record = {
+        id: imgIndex, // keyPath value
+        name: `container-${imgIndex}`,
+        images: imageLayers.map(({ url, name }) => ({ url, name })),
+        timestamp: Date.now(),
+      };
+      putRecord(record)
+        .then((id) => console.log(`Record updated with id ${id}`))
+        .catch((err) => console.error(`Error updating record:`, err));
+    });
+  }, [texturesLoaded, dbReady, loadedTextures]);
+
+  // // make textures from database urls
 
   // const [drawingPath, setDrawingPath] = useState<number[][]>([]);
   // const drawingRef = useRef(false);

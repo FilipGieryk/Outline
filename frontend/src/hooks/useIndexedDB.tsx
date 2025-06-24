@@ -57,9 +57,7 @@ const useIndexedDB = () => {
   };
 
   const clearDatabase = () => {
-    console.log("sddsd");
     if (!dbReady) return;
-    console.log("sds");
     const transaction = dbRef.current.transaction("myStore", "readwrite");
     const store = transaction.objectStore("myStore");
     const clearRequest = store.clear();
