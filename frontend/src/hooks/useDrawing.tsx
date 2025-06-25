@@ -1,7 +1,6 @@
-import type { FederatedPointerEvent } from "@pixi/events";
 import { useCallback, useRef, useState } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { Application, Graphics } from "pixi.js";
+import { Application, FederatedPointerEvent, Graphics } from "pixi.js";
 import { useApplyDrawingToLayer } from "./useApplyDrawingToLayer";
 import useFloodFill from "./useFloodFill";
 
