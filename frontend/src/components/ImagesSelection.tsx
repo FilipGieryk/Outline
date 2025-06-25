@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { RenderTexture, Texture } from "pixi.js";
+import { Container, RenderTexture, Texture, type Renderer } from "pixi.js";
 
 export const ImagesSelection = () => {
   const {
@@ -29,8 +29,8 @@ export const ImagesSelection = () => {
   };
 
   function downloadPixiContainerImage(
-    renderer,
-    container,
+    renderer: Renderer,
+    container: Container,
     filename: string = "merged.png"
   ) {
     const bounds = container.getLocalBounds();
@@ -49,10 +49,9 @@ export const ImagesSelection = () => {
     container.position.set(originalPosition.x, originalPosition.y);
     container.scale.set(originalScale);
     const canvas = renderer.extract.canvas(renderTexture);
-
     const link = document.createElement("a");
     link.download = filename;
-    link.href = canvas.toDataURL("image/png");
+    if (canvas.toDataURL) link.href = canvas.toDataURL("image/png");
     link.click();
   }
 
@@ -66,11 +65,13 @@ export const ImagesSelection = () => {
 
   const NewDrawing = () => {
     const newTexture = createBlankTexture();
+    if (!newTexture) return;
     setLoadedTextures((prev) => [...prev, [newTexture]]);
   };
   useEffect(() => {
     if (!loadedTextures || loadedTextures.length === 0) {
       const newTexture = createBlankTexture();
+      if (!newTexture) return;
       setLoadedTextures([[newTexture]]);
     }
   }, [loadedTextures, setLoadedTextures]);

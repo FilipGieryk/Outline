@@ -21,7 +21,7 @@ export const Layers = () => {
     appRef,
   } = useImageContext();
 
-  const toggleVisibility = (index) => {
+  const toggleVisibility = (index: number) => {
     setLoadedTextures((prevTextures) => {
       const updatedTextures = [...prevTextures];
 
@@ -37,7 +37,7 @@ export const Layers = () => {
       return updatedTextures;
     });
   };
-  const handleLayerDelete = (index) => {
+  const handleLayerDelete = (index: number) => {
     setLoadedTextures((prevTextures) => {
       const updatedTextures = [...prevTextures];
 
@@ -49,7 +49,12 @@ export const Layers = () => {
     });
   };
 
-  const SortableItem = ({ id, index }) => {
+  interface SortableItemProps {
+    id: string;
+    index: number;
+  }
+
+  const SortableItem: React.FC<SortableItemProps> = ({ id, index }) => {
     const sortable = useSortable({
       id,
       index,
@@ -79,7 +84,6 @@ export const Layers = () => {
 
     const height = textureRefrence.height;
     const width = textureRefrence.width;
-    console.log(textureRefrence);
 
     const newRenderTexture = RenderTexture.create({ width, height });
 
@@ -115,12 +119,10 @@ export const Layers = () => {
         // modifiers={[restrictToParentElement]}
         onDragEnd={(event) => {
           const { operation } = event;
-          console.log(operation);
-          const targetIndex = operation.target.sortable.previousIndex;
-          const initialIndex = operation.target.sortable.initialIndex;
-          setSelectedLayer(targetIndex);
-          console.log(selectedLayer);
           if (operation.target) {
+            const targetIndex = operation.target.sortable.previousIndex;
+            const initialIndex = operation.target.sortable.initialIndex;
+            setSelectedLayer(targetIndex);
             setLoadedTextures((prevTextures) => {
               const updatedTextures = [...prevTextures];
               const layers = [...updatedTextures[selectedImageKey]];

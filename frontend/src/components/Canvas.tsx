@@ -1,5 +1,4 @@
-import type { FederatedPointerEvent } from "@pixi/events";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { extend, Application, useApplication } from "@pixi/react";
 import {
   Container,
@@ -8,6 +7,8 @@ import {
   Assets,
   Rectangle,
   TilingSprite,
+  FederatedPointerEvent,
+  FederatedWheelEvent,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
@@ -42,7 +43,6 @@ const Canvas = () => {
   const textureHeight = originalTextureObj?.texture?.height || 1000;
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
-  const containerRefs = useRef(new Map());
   const scaleRef = useRef(1);
 
   // to hook like file upload or handle filse
@@ -300,7 +300,15 @@ const Canvas = () => {
 
   //
 
-  const ImageComponent = ({ layerIndex, imgIndex }) => {
+  interface ImageComponentProps {
+    layerIndex: number;
+    imgIndex: number;
+  }
+
+  const ImageComponent: React.FC<ImageComponentProps> = ({
+    layerIndex,
+    imgIndex,
+  }) => {
     const { draw, handlePointerDown, handlePointerMove, handlePointerUp } =
       useDrawing(textureWidth, textureHeight);
     const { app } = useApplication();
@@ -343,8 +351,16 @@ const Canvas = () => {
     );
   };
 
-  const ContainerComponent = ({ imgIndex, children }) => {
-    const containerRef = useRef(null);
+  interface ContainerComponentProps {
+    imgIndex: number;
+    children: ReactNode;
+  }
+
+  const ContainerComponent: React.FC<ContainerComponentProps> = ({
+    imgIndex,
+    children,
+  }) => {
+    const containerRef = useRef<Container>(null);
 
     const { containerRefs } = useImageContext();
     useEffect(() => {
@@ -358,7 +374,8 @@ const Canvas = () => {
     }, [imgIndex]);
 
     if (!initialPositionsRef.current.has(imgIndex)) {
-      const { width, height } = parentRef.current?.getBoundingClientRect();
+      if (!parentRef.current) return;
+      const { width, height } = parentRef.current.getBoundingClientRect();
       const scale = Math.min(width / textureWidth, height / textureHeight);
       const initialX = (width - textureWidth * scale) / 2;
       const initialY = (height - textureHeight * scale) / 2;
@@ -376,7 +393,7 @@ const Canvas = () => {
     }
     const currentPostion = currentPositionsRef.current.get(imgIndex);
 
-    const onWheel = (event: FederatedPointerEvent) => {
+    const onWheel = (event: FederatedWheelEvent) => {
       const container = containerRef.current;
       if (!container || !parentRef.current) return;
       const initialPos = initialPositionsRef.current.get(imgIndex);
@@ -446,12 +463,7 @@ const Canvas = () => {
     >
       <Application resizeTo={parentRef} backgroundColor={0xffffff}>
         {loadedTextures?.map((imageLayers, imgIndex) => (
-          <ContainerComponent
-            imgIndex={imgIndex}
-            containerRefCallback={(ref) =>
-              containerRefs.current.set(imgIndex, ref)
-            }
-          >
+          <ContainerComponent imgIndex={imgIndex}>
             {imageLayers.map((_, layerIndex) => (
               <ImageComponent layerIndex={layerIndex} imgIndex={imgIndex} />
             ))}
