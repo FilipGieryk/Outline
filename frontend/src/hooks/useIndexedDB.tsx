@@ -1,35 +1,42 @@
 import { useEffect, useRef, useState } from "react";
+import type { ImageProp } from "../components/Canvas";
+
+interface RecordProp {
+  id: number;
+  name: string;
+  images: ImageProp[];
+  timestamp: number;
+}
 
 const useIndexedDB = () => {
-  const dbRef = useRef(null);
+  const dbRef = useRef<IDBDatabase | null>(null);
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [dbItems, setDbItems] = useState<any[]>([]);
   useEffect(() => {
     // Bump the version to force onupgradeneeded if necessary
     const request = indexedDB.open("pixiljs", 2); // incremented version number
 
-    request.onupgradeneeded = function (event) {
-      const db = event.target.result;
+    request.onupgradeneeded = () => {
+      const db = request.result;
       if (!db.objectStoreNames.contains("myStore")) {
         const objectStore = db.createObjectStore("myStore", { keyPath: "id" });
         objectStore.createIndex("name", "name", { unique: false });
-        console.log("Object store and index created");
       }
     };
 
-    request.onsuccess = function (event) {
-      const db = event.target.result;
-      console.log("Database opened successfully", db);
+    request.onsuccess = () => {
+      const db = request.result;
       dbRef.current = db;
       setDbReady(true);
     };
 
-    request.onerror = function (event) {
-      console.error("Database error:", event.target.error);
+    request.onerror = () => {
+      console.error("Database error:", request.error);
     };
   }, []);
 
-  const putRecord = (record) => {
+  const putRecord = (record: RecordProp) => {
+    console.log(record);
     return new Promise((resolve, reject) => {
       if (!dbRef.current) {
         return reject(new Error("Database not initialized"));
@@ -37,11 +44,11 @@ const useIndexedDB = () => {
       const transaction = dbRef.current.transaction("myStore", "readwrite");
       const store = transaction.objectStore("myStore");
       const req = store.put(record); // Using put to add or update
-      req.onsuccess = (event) => resolve(event.target.result);
-      req.onerror = (event) => reject(event.target.error);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     });
   };
-  const getAllRecords = () => {
+  const getAllRecords = (): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       if (!dbRef.current) {
         return reject(new Error("Database not initialized"));
@@ -49,8 +56,8 @@ const useIndexedDB = () => {
       const transaction = dbRef.current.transaction("myStore", "readonly");
       const store = transaction.objectStore("myStore");
       const req = store.getAll();
-      req.onsuccess = (event) => resolve(event.target.result);
-      req.onerror = (event) => reject(event.target.error);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     });
   };
 
@@ -62,8 +69,8 @@ const useIndexedDB = () => {
     clearRequest.onsuccess = () => {
       console.log("IndexedDB cleared successfully.");
     };
-    clearRequest.onerror = (event) => {
-      console.error("Error clearing IndexedDB:", event.target.error);
+    clearRequest.onerror = () => {
+      console.error("Error clearing IndexedDB:", clearRequest.error);
     };
   };
   const refreshRecords = () => {

@@ -18,6 +18,11 @@ import { useDrawing } from "../hooks/useDrawing";
 
 extend({ Container, Sprite, Graphics, TilingSprite });
 
+export interface ImageProp {
+  url: string;
+  name: string;
+}
+
 const Canvas = () => {
   const {
     processedImages,
@@ -80,9 +85,7 @@ const Canvas = () => {
   }, [processedImages]);
 
   useEffect(() => {
-    console.log("useeeffect to get from database");
     if (!dbReady || processedImages[0].length != 0) return;
-    console.log("getting from database");
     getAllRecords()
       .then(async (items) => {
         console.log(items);
@@ -90,7 +93,7 @@ const Canvas = () => {
           items.map(async (item) => {
             console.log(item);
             const imageLayers = await Promise.all(
-              item.images.map(async ({ url, name }) => {
+              item.images.map(async ({ url, name }: ImageProp) => {
                 try {
                   const texture = await loadTexture(url, undefined, name);
                   return texture;
