@@ -3,8 +3,6 @@ import { useImageContext } from "../context/ImageContext";
 export const Tools = () => {
   const { tool, setTool } = useImageContext();
 
-  // const currentTool = toolRef.current;
-
   const isActive = (toolName: string) =>
     tool === toolName ? "bg-[#010101] shadow-amber-500" : "";
 

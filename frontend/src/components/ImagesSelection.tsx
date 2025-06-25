@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { Container, RenderTexture, Texture, type Renderer } from "pixi.js";
+import { createBlankTexture } from "../utils/Canvas";
+import { downloadPixiContainerImage } from "../utils/pixiExport";
 
 export const ImagesSelection = () => {
   const {
@@ -10,50 +11,6 @@ export const ImagesSelection = () => {
     containerRefs,
     appRef,
   } = useImageContext();
-
-  const createBlankTexture = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1000; // Set a reasonable default size
-    canvas.height = 1000;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = "white"; // Optional: Set a white background
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const baseTexture = Texture.from(canvas);
-    return {
-      url: canvas.toDataURL(),
-      texture: baseTexture,
-      name: "layer0",
-      visible: true,
-    };
-  };
-
-  function downloadPixiContainerImage(
-    renderer: Renderer,
-    container: Container,
-    filename: string = "merged.png"
-  ) {
-    const bounds = container.getLocalBounds();
-    const renderTexture = RenderTexture.create({
-      width: bounds.width,
-      height: bounds.height,
-    });
-
-    const originalScale = container.scale.x;
-    const originalPosition = { x: container.x, y: container.y };
-    container.position.set(-bounds.x, -bounds.y);
-    container.scale.set(1);
-
-    renderer.render(container, { renderTexture });
-
-    container.position.set(originalPosition.x, originalPosition.y);
-    container.scale.set(originalScale);
-    const canvas = renderer.extract.canvas(renderTexture);
-    const link = document.createElement("a");
-    link.download = filename;
-    if (canvas.toDataURL) link.href = canvas.toDataURL("image/png");
-    link.click();
-  }
 
   const deleteImg = (index: number) => {
     const result = confirm("Are you sure?");
@@ -68,6 +25,7 @@ export const ImagesSelection = () => {
     if (!newTexture) return;
     setLoadedTextures((prev) => [...prev, [newTexture]]);
   };
+
   useEffect(() => {
     if (!loadedTextures || loadedTextures.length === 0) {
       const newTexture = createBlankTexture();
@@ -75,13 +33,14 @@ export const ImagesSelection = () => {
       setLoadedTextures([[newTexture]]);
     }
   }, [loadedTextures, setLoadedTextures]);
+
   return (
     <div className="bg-[#2f2f35] w-full h-full row-start-2 col-start-1 col-end-4 flex flex-wrap gap-4 p-2">
       {loadedTextures?.length > 0 ? (
         loadedTextures.map((imageLayers, index) => (
           <div key={index} className="relative w-32 h-30">
             <img
-              src={imageLayers[0]?.url} // Display stored image URL
+              src={imageLayers[0]?.url}
               alt={`Processed ${index}`}
               className="w-full h-full object-cover border-2 rounded hover:scale-105 transition-transform"
               onClick={() => setSelectedImageKey(index)}

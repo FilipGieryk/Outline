@@ -8,7 +8,11 @@
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
-    "noEmit": false
+    "noEmit": false,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": ["src"],
   "files": [],
