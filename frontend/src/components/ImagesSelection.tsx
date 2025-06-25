@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useImageContext } from "../context/ImageContext";
-import { createBlankTexture } from "../utils/Canvas";
+import { createBlankTexture } from "../utils/canvas";
 import { downloadPixiContainerImage } from "../utils/pixiExport";
 
 export const ImagesSelection = () => {
