@@ -4,7 +4,6 @@ import {
   Container,
   Sprite,
   Graphics,
-  Assets,
   Rectangle,
   TilingSprite,
   FederatedPointerEvent,
@@ -12,9 +11,10 @@ import {
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
-import useIndexedDB from "../hooks/useIndexedDB";
 
 import { useDrawing } from "../hooks/useDrawing";
+import { useTextureManager } from "../hooks/useTextureManager";
+import { useDbReady } from "../hooks/useDbReady";
 
 extend({ Container, Sprite, Graphics, TilingSprite });
 
@@ -24,24 +24,17 @@ export interface ImageProp {
 }
 
 const Canvas = () => {
-  const {
+  const { processedImages, selectedImageKey, selectedLayer, appRef } =
+    useImageContext();
+  const dbReady = useDbReady();
+
+  const { loadedTextures, texturesLoaded } = useTextureManager({
+    dbReady,
     processedImages,
-    selectedImageKey,
-    selectedLayer,
-    loadedTextures,
-    setLoadedTextures,
-    appRef,
-  } = useImageContext();
-
-  // background gray squares
-  // x on images deletes them
-  // eraser shows what its gonna look like from erasing not at the end
-  // const app = useApplication();
+  });
   const parentRef = useRef<HTMLDivElement>(null);
-
-  const [texturesLoaded, setTexturesLoaded] = useState(false);
   const canvasRef = useRef(null);
-  const { dbReady, putRecord, getAllRecords } = useIndexedDB();
+
   const [scaleFactor, setScaleFactor] = useState(1);
   const originalTextureObj = loadedTextures[selectedImageKey]?.[selectedLayer];
   const textureWidth = originalTextureObj?.texture?.width || 2000;
@@ -49,220 +42,6 @@ const Canvas = () => {
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
   const scaleRef = useRef(1);
-
-  // to hook like file upload or handle filse
-  const loadTexture = (url: string, index?: number, name?: string) => {
-    return Assets.load(url).then((texture) => ({
-      url,
-      texture,
-      visible: true,
-      name: name || `layer${index}`,
-    }));
-  };
-
-  const loadAllTextures = async () => {
-    try {
-      console.log(processedImages);
-      const textures2D = await Promise.all(
-        processedImages.map(async (imageLayers) => {
-          const textures = await Promise.all(
-            imageLayers.map((url, index) => loadTexture(url, index))
-          );
-          return textures;
-        })
-      );
-
-      setLoadedTextures(textures2D);
-      setTexturesLoaded(true);
-    } catch (error) {
-      console.error("Failed to load textures:", error);
-    }
-  };
-
-  // // stays here
-  useEffect(() => {
-    loadAllTextures();
-  }, [processedImages]);
-
-  useEffect(() => {
-    if (!dbReady || processedImages[0].length != 0) return;
-    getAllRecords()
-      .then(async (items) => {
-        console.log(items);
-        const textures = await Promise.all(
-          items.map(async (item) => {
-            console.log(item);
-            const imageLayers = await Promise.all(
-              item.images.map(async ({ url, name }: ImageProp) => {
-                try {
-                  const texture = await loadTexture(url, undefined, name);
-                  return texture;
-                } catch (error) {
-                  console.error("Error loading texture from URL:", url, error);
-                  return { url, texture: null };
-                }
-              })
-            );
-            console.log(imageLayers);
-            return imageLayers;
-          })
-        );
-        setLoadedTextures(textures);
-      })
-      .catch((error) =>
-        console.error("Failed to fetch textures from IndexedDB:", error)
-      );
-  }, [dbReady]);
-
-  useEffect(() => {
-    if (!dbReady || !texturesLoaded || loadedTextures.length === 0) return;
-    loadedTextures.forEach((imageLayers, imgIndex) => {
-      console.log("to db");
-      console.log(imageLayers);
-      const record = {
-        id: imgIndex, // keyPath value
-        name: `container-${imgIndex}`,
-        images: imageLayers.map(({ url, name }) => ({ url, name })),
-        timestamp: Date.now(),
-      };
-      putRecord(record)
-        .then((id) => console.log(`Record updated with id ${id}`))
-        .catch((err) => console.error(`Error updating record:`, err));
-    });
-  }, [texturesLoaded, dbReady, loadedTextures]);
-
-  // // make textures from database urls
-
-  // const [drawingPath, setDrawingPath] = useState<number[][]>([]);
-  // const drawingRef = useRef(false);
-  // const handlePointerDown = (event, app, graphicsRef) => {
-  //   const pos = graphicsRef.current.toLocal(event.data.global);
-  //   if (tool === "fill") {
-  //     floodFill(pos.x, pos.y, selectedColor, app, scaleFactor);
-  //   }
-  //   drawingRef.current = true;
-  //   setDrawingPath([[pos.x, pos.y]]);
-  // };
-  // const handlePointerMove = (event, graphicsRef) => {
-  //   if (!drawingRef.current || !graphicsRef.current) return;
-  //   const pos = graphicsRef.current.toLocal(event.data.global);
-  //   setDrawingPath((prev) => [...prev, [pos.x, pos.y]]);
-  // };
-
-  // const handlePointerUp = (app) => {
-  //   console.log("handlepoitnerup");
-  //   drawingRef.current = false;
-  //   if (drawingPath.length > 0) {
-  //     applyDrawingToLayer(app);
-  //   }
-  // };
-
-  // const draw = useCallback(
-  //   (g: Graphics) => {
-  //     g.clear();
-
-  //     const ctx = g.context;
-  //     ctx.beginPath(); // Start a new path
-  //     ctx.strokeStyle = selectedColor;
-  //     ctx.strokeStyle.width = sizeRef.current;
-  //     drawingPath.forEach(([x, y], i) => {
-  //       if (i === 0) ctx.moveTo(x, y);
-  //       else ctx.lineTo(x, y);
-  //     });
-  //     ctx.stroke(); // Apply stroke
-  //   },
-  //   [drawingPath, textureWidth, textureHeight]
-  // );
-
-  // const createCheckeredTexture = () => {
-  //   const canvas = document.createElement("canvas");
-  //   canvas.width = 2;
-  //   canvas.height = 2;
-  //   const ctx = canvas.getContext("2d");
-
-  //   ctx.fillStyle = "white";
-  //   ctx.fillRect(0, 0, 1, 1);
-  //   ctx.fillRect(1, 1, 1, 1);
-
-  //   ctx.fillStyle = "lightgray";
-  //   ctx.fillRect(1, 0, 1, 1);
-  //   ctx.fillRect(0, 1, 1, 1);
-
-  //   return Texture.from(canvas);
-  // };
-  // useEffect(() => {
-  //   const texture = createCheckeredTexture();
-  //   setCheckeredTexture(texture);
-  // }, []);
-
-  // const applyDrawingToLayer = async (app) => {
-  //   if (!app || drawingPath.length === 0) return;
-
-  //   const maskGraphics = new Graphics();
-  //   const ctx = maskGraphics.context;
-  //   console.log(drawingPath);
-
-  //   ctx.beginPath();
-  //   ctx.strokeStyle = selectedColor;
-  //   ctx.strokeStyle.width = sizeRef.current;
-
-  //   drawingPath.forEach(([x, y], i) => {
-  //     if (i === 0) ctx.moveTo(x, y);
-  //     else ctx.lineTo(x, y);
-  //   });
-
-  //   ctx.stroke(); // Apply stroke
-  //   const originalTextureObj = loadedTextures[selectedImageKey][selectedLayer];
-  //   if (!originalTextureObj) return;
-  //   const { texture: originalTexture } = originalTextureObj;
-  //   originalTexture.scaleMode = SCALE_MODES.NEAREST;
-
-  //   // Create a sprite for the original texture
-  //   const originalSprite = new Sprite(originalTexture);
-  //   const container = new Container();
-
-  //   // Use the mask on the original sprite
-  //   if (tool === "erase") {
-  //     originalSprite.setMask({
-  //       mask: maskGraphics,
-  //       inverse: true,
-  //     });
-  //   }
-
-  //   // Add the original sprite to the container
-  //   container.addChild(originalSprite);
-  //   if (tool === "draw") {
-  //     container.addChild(maskGraphics);
-  //   }
-
-  //   // Render the container to the main texture
-  //   const renderTexture = RenderTexture.create({
-  //     width: originalTexture.width,
-  //     height: originalTexture.height,
-  //   });
-  //   app.renderer.render(container, { renderTexture, clear: true });
-
-  //   // Extract the final image
-  //   const newUrl = await app.renderer.extract.base64(renderTexture);
-  //   // Now update the state with the new URL string.
-  //   setLoadedTextures((prev) => {
-  //     const newTextures = [...prev];
-  //     newTextures[selectedImageKey] = newTextures[selectedImageKey].map(
-  //       (layer, index) =>
-  //         index === selectedLayer
-  //           ? {
-  //               ...layer,
-  //               texture: renderTexture,
-  //               url: newUrl,
-  //             }
-  //           : layer
-  //     );
-  //     return newTextures;
-  //   });
-
-  //   // Clear drawing path for next time
-  //   setDrawingPath([]);
-  // };
 
   useEffect(() => {
     if (!parentRef.current || !texturesLoaded) return;
@@ -280,28 +59,10 @@ const Canvas = () => {
   const computedWidth = textureWidth * scaleFactor;
   const computedHeight = textureHeight * scaleFactor;
   useEffect(() => {
-    console.log("change canvas size");
     if (!canvasRef.current || !appRef.current?.getApplication()) return;
     const app = appRef.current.getApplication();
     app.renderer.resize(computedWidth, computedHeight);
   }, [computedWidth, computedHeight]);
-
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-  //
-
-  //
-  //
-  //
-
-  //
 
   interface ImageComponentProps {
     layerIndex: number;
@@ -317,7 +78,7 @@ const Canvas = () => {
     const { app } = useApplication();
     appRef.current = app;
     const graphicsRef = useRef<Graphics | null>(null);
-
+    console.log(loadedTextures);
     return (
       <pixiContainer
         key={layerIndex}
@@ -369,7 +130,6 @@ const Canvas = () => {
     useEffect(() => {
       if (containerRef.current) {
         containerRefs.current.set(imgIndex, containerRef.current);
-        console.log(containerRef.current);
       }
       return () => {
         containerRefs.current.delete(imgIndex); // cleanup
@@ -457,8 +217,9 @@ const Canvas = () => {
       </pixiContainer>
     );
   };
+  console.log(texturesLoaded);
+  console.log(loadedTextures);
   if (!texturesLoaded) return <div>Loading...</div>;
-
   return (
     <div
       ref={parentRef}

@@ -1,6 +1,12 @@
-import { createContext, useState, useContext, useRef, ReactNode } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  useRef,
+  type ReactNode,
+} from "react";
 
-interface LoadedTexture {
+export interface LoadedTexture {
   name: string;
   texture: any;
   url: string;

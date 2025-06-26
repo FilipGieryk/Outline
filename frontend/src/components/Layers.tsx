@@ -6,6 +6,11 @@ import { DragDropProvider } from "@dnd-kit/react";
 import { RestrictToElement } from "@dnd-kit/dom/modifiers";
 import { RenderTexture } from "pixi.js";
 
+interface SortableItemProps {
+  id: string;
+  index: number;
+}
+
 export const Layers = () => {
   const {
     selectedImageKey,
@@ -20,7 +25,7 @@ export const Layers = () => {
     setLoadedTextures,
     appRef,
   } = useImageContext();
-
+  console.log(loadedTextures);
   const toggleVisibility = (index: number) => {
     setLoadedTextures((prevTextures) => {
       const updatedTextures = [...prevTextures];
@@ -49,11 +54,6 @@ export const Layers = () => {
     });
   };
 
-  interface SortableItemProps {
-    id: string;
-    index: number;
-  }
-
   const SortableItem: React.FC<SortableItemProps> = ({ id, index }) => {
     const sortable = useSortable({
       id,
@@ -64,6 +64,7 @@ export const Layers = () => {
         }),
       ],
     });
+
     return (
       <div
         ref={sortable.ref}
@@ -90,7 +91,6 @@ export const Layers = () => {
     const app = appRef.current;
 
     const newUrl = await app.renderer.extract.base64(newRenderTexture);
-
     setLoadedTextures((prevTextures) => {
       const updatedTextures = [...prevTextures];
       updatedTextures[selectedImageKey] = [
