@@ -37,8 +37,6 @@ export const useDrawing = (textureWidth: any, textureHeight: any) => {
   };
 
   const handlePointerUp = (app: Application) => {
-    console.log("handlepoitnerup");
-
     drawingRef.current = false;
     if (drawingPath.length > 0) {
       applyDrawingToLayer(app, drawingPath, setDrawingPath);
@@ -48,14 +46,15 @@ export const useDrawing = (textureWidth: any, textureHeight: any) => {
   const draw = useCallback(
     (g: Graphics) => {
       const ctx = g.context;
-      ctx.beginPath(); // Start a new path
-      ctx.strokeStyle = selectedColor;
+
+      ctx.beginPath();
+      ctx.strokeStyle = tool === "draw" ? selectedColor : "white";
       ctx.strokeStyle.width = sizeRef.current;
       drawingPath.forEach(([x, y], i) => {
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
-      ctx.stroke(); // Apply stroke
+      ctx.stroke();
     },
     [drawingPath, textureWidth, textureHeight]
   );

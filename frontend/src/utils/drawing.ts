@@ -31,7 +31,8 @@ export const renderDrawingToTexture = (
 
   ctx.stroke();
 
-  originalTexture.scaleMode = SCALE_MODES.NEAREST;
+  // add scale to resolution
+  originalTexture.scaleMode = "nearest";
 
   const originalSprite = new Sprite(originalTexture);
   const container = new Container();

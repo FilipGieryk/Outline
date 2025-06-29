@@ -8,6 +8,7 @@ import {
   TilingSprite,
   FederatedPointerEvent,
   FederatedWheelEvent,
+  type BLEND_MODES,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
@@ -23,6 +24,16 @@ export interface ImageProp {
   name: string;
 }
 
+interface ImageComponentProps {
+  layerIndex: number;
+  imgIndex: number;
+}
+
+interface ContainerComponentProps {
+  imgIndex: number;
+  children: ReactNode;
+}
+
 const Canvas = () => {
   const { processedImages, selectedImageKey, selectedLayer, appRef } =
     useImageContext();
@@ -32,9 +43,8 @@ const Canvas = () => {
     dbReady,
     processedImages,
   });
-  const parentRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef(null);
 
+  const parentRef = useRef<HTMLDivElement>(null);
   const [scaleFactor, setScaleFactor] = useState(1);
   const originalTextureObj = loadedTextures[selectedImageKey]?.[selectedLayer];
   const textureWidth = originalTextureObj?.texture?.width || 2000;
@@ -43,6 +53,7 @@ const Canvas = () => {
   const currentPositionsRef = useRef(new Map());
   const scaleRef = useRef(1);
 
+  // useeffect that need any usestate so it rerender
   useEffect(() => {
     if (!parentRef.current || !texturesLoaded) return;
     if (
@@ -56,19 +67,6 @@ const Canvas = () => {
     }
   }, [parentRef, textureWidth, textureHeight, texturesLoaded]);
 
-  const computedWidth = textureWidth * scaleFactor;
-  const computedHeight = textureHeight * scaleFactor;
-  useEffect(() => {
-    if (!canvasRef.current || !appRef.current?.getApplication()) return;
-    const app = appRef.current.getApplication();
-    app.renderer.resize(computedWidth, computedHeight);
-  }, [computedWidth, computedHeight]);
-
-  interface ImageComponentProps {
-    layerIndex: number;
-    imgIndex: number;
-  }
-
   const ImageComponent: React.FC<ImageComponentProps> = ({
     layerIndex,
     imgIndex,
@@ -78,7 +76,7 @@ const Canvas = () => {
     const { app } = useApplication();
     appRef.current = app;
     const graphicsRef = useRef<Graphics | null>(null);
-    console.log(loadedTextures);
+    const spriteRef = useRef(null);
     return (
       <pixiContainer
         key={layerIndex}
@@ -91,42 +89,80 @@ const Canvas = () => {
         }
       >
         <pixiSprite
+          ref={spriteRef}
           visible={loadedTextures[imgIndex]?.[layerIndex]?.visible === true}
           texture={loadedTextures[imgIndex]?.[layerIndex]?.texture}
         />
         {imgIndex === selectedImageKey && layerIndex === selectedLayer && (
-          <pixiGraphics
-            ref={graphicsRef}
-            x={0}
-            y={0}
-            draw={draw}
-            interactive={true}
-            onPointerDown={(event: FederatedPointerEvent) =>
-              handlePointerDown(event, app, graphicsRef.current)
-            }
-            onPointerMove={(event: FederatedPointerEvent) =>
-              handlePointerMove(event, graphicsRef.current)
-            }
-            onPointerUp={() => handlePointerUp(app)}
-            hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
-          />
+          <pixiContainer>
+            <pixiGraphics
+              ref={graphicsRef}
+              x={0}
+              y={0}
+              draw={draw}
+              interactive={true}
+              onPointerDown={(event: FederatedPointerEvent) =>
+                handlePointerDown(event, app, graphicsRef.current)
+              }
+              onPointerMove={(event: FederatedPointerEvent) =>
+                handlePointerMove(event, graphicsRef.current)
+              }
+              onPointerUp={() => handlePointerUp(app)}
+              hitArea={new Rectangle(0, 0, textureWidth, textureHeight)}
+            />
+          </pixiContainer>
         )}
       </pixiContainer>
     );
   };
-
-  interface ContainerComponentProps {
-    imgIndex: number;
-    children: ReactNode;
-  }
 
   const ContainerComponent: React.FC<ContainerComponentProps> = ({
     imgIndex,
     children,
   }) => {
     const containerRef = useRef<Container>(null);
-
     const { containerRefs } = useImageContext();
+
+    const prevSizeRef = useRef<DOMRect | null>(null);
+    useEffect(() => {
+      if (!parentRef.current) return;
+
+      const observer = new ResizeObserver(() => {
+        const parentBounds = parentRef.current?.getBoundingClientRect();
+        const container = containerRef.current;
+        if (!container || !parentBounds) return;
+
+        const posRef = currentPositionsRef.current.get(imgIndex);
+        if (!posRef) return;
+
+        const { x: oldX, y: oldY, scale } = posRef;
+
+        if (!prevSizeRef.current) {
+          prevSizeRef.current = parentBounds;
+          return;
+        }
+
+        const dx = parentBounds.width - prevSizeRef.current.width;
+        const dy = parentBounds.height - prevSizeRef.current.height;
+
+        // Move image only by the added/removed space (half on each side)
+        const newX = oldX + dx / 2;
+        const newY = oldY + dy / 2;
+
+        container.position.set(newX, newY);
+        container.scale.set(scale);
+
+        currentPositionsRef.current.set(imgIndex, { x: newX, y: newY, scale });
+
+        // Update previous size
+        prevSizeRef.current = parentBounds;
+      });
+
+      observer.observe(parentRef.current);
+
+      return () => observer.disconnect();
+    }, [imgIndex]);
+
     useEffect(() => {
       if (containerRef.current) {
         containerRefs.current.set(imgIndex, containerRef.current);
@@ -142,7 +178,6 @@ const Canvas = () => {
       const scale = Math.min(width / textureWidth, height / textureHeight);
       const initialX = (width - textureWidth * scale) / 2;
       const initialY = (height - textureHeight * scale) / 2;
-
       initialPositionsRef.current.set(imgIndex, {
         x: initialX,
         y: initialY,
@@ -167,7 +202,7 @@ const Canvas = () => {
 
       if (event.deltaY < 0) {
         const localBefore = container.toLocal(event.global);
-        newScale = Math.min(container.scale.x * zoomFactor, 5);
+        newScale = Math.min(container.scale.x * zoomFactor, 20);
         container.scale.set(newScale);
         const localAfter = container.toLocal(event.global);
         container.position.x += (localAfter.x - localBefore.x) * newScale;
@@ -198,7 +233,7 @@ const Canvas = () => {
       currentPositionsRef.current.set(imgIndex, {
         x: container.position.x,
         y: container.position.y,
-        scale: container.scale,
+        scale: newScale,
       });
       scaleRef.current = newScale;
     };
@@ -217,9 +252,7 @@ const Canvas = () => {
       </pixiContainer>
     );
   };
-  console.log(texturesLoaded);
-  console.log(loadedTextures);
-  if (!texturesLoaded) return <div>Loading...</div>;
+  if (!texturesLoaded || !originalTextureObj) return <div>Loading...</div>;
   return (
     <div
       ref={parentRef}
