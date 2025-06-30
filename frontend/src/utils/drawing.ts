@@ -19,7 +19,6 @@ export const renderDrawingToTexture = (
 
   const maskGraphics = new Graphics();
   const ctx = maskGraphics.context;
-
   ctx.beginPath();
   ctx.strokeStyle = color;
   ctx.strokeStyle.width = size;
@@ -40,7 +39,6 @@ export const renderDrawingToTexture = (
   if (tool === "erase") {
     originalSprite.setMask({ mask: maskGraphics, inverse: true });
   }
-
   container.addChild(originalSprite);
 
   if (tool === "draw") {
