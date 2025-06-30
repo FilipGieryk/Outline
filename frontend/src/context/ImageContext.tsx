@@ -5,6 +5,7 @@ import {
   useRef,
   type ReactNode,
 } from "react";
+import { UndoStack, type UndoStep } from "../utils/undoStack";
 
 export interface LoadedTexture {
   name: string;
@@ -12,8 +13,15 @@ export interface LoadedTexture {
   url: string;
   visible: boolean;
 }
+export interface UndoEntry {
+  layerIndex: number;
+  url: string;
+}
 
 interface ImageContextType {
+  undoStacks: Record<string, UndoStack>;
+  ensureUndoStack: (imageKey: number, initialState: UndoEntry) => void;
+
   processedImages: string[][];
   setProcessedImages: React.Dispatch<React.SetStateAction<string[][]>>;
 
@@ -65,6 +73,7 @@ export const ImageProvider: React.FC<ImageProviderProps> = ({ children }) => {
   const [tool, setTool] = useState<string>("draw");
   const sizeRef = useRef<number>(1);
   const appRef = useRef<any>(null);
+  const [undoStacks, setUndoStacks] = useState<Record<string, UndoStack>>({});
   const [colors, setColors] = useState<string[]>([
     "#000000",
     "#ff0000",
@@ -72,9 +81,22 @@ export const ImageProvider: React.FC<ImageProviderProps> = ({ children }) => {
     "#0000ff",
   ]);
   const [selectedColor, setSelectedColor] = useState<string>(colors[0]);
+  const ensureUndoStack = (imageKey: number, initialStep: UndoEntry) => {
+    const key = imageKey.toString(); // 🔁 convert to string
+    setUndoStacks((prev) => {
+      if (prev[key]) return prev;
+      return {
+        ...prev,
+        [key]: new UndoStack(initialStep),
+      };
+    });
+  };
+
   return (
     <ImageContext.Provider
       value={{
+        ensureUndoStack,
+        undoStacks,
         processedImages,
         setProcessedImages,
         selectedImageKey,

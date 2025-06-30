@@ -9,6 +9,7 @@ import {
   FederatedPointerEvent,
   FederatedWheelEvent,
   type BLEND_MODES,
+  Texture,
 } from "pixi.js";
 
 import { useImageContext } from "../context/ImageContext";
@@ -16,6 +17,7 @@ import { useImageContext } from "../context/ImageContext";
 import { useDrawing } from "../hooks/useDrawing";
 import { useTextureManager } from "../hooks/useTextureManager";
 import { useDbReady } from "../hooks/useDbReady";
+import { loadTexture } from "../utils/textureLoader";
 
 extend({ Container, Sprite, Graphics, TilingSprite });
 
@@ -35,8 +37,14 @@ interface ContainerComponentProps {
 }
 
 const Canvas = () => {
-  const { processedImages, selectedImageKey, selectedLayer, appRef } =
-    useImageContext();
+  const {
+    processedImages,
+    selectedImageKey,
+    selectedLayer,
+    appRef,
+    undoStacks,
+    setLoadedTextures,
+  } = useImageContext();
   const dbReady = useDbReady();
 
   const { loadedTextures, texturesLoaded } = useTextureManager({
@@ -52,6 +60,69 @@ const Canvas = () => {
   const initialPositionsRef = useRef(new Map());
   const currentPositionsRef = useRef(new Map());
   const scaleRef = useRef(1);
+
+  const applyTextureToLayer = async (
+    imageKey: number,
+    layerIndex: number,
+    url: string
+  ) => {
+    const app = appRef.current;
+    if (!app) return;
+    const textureObj = await loadTexture(url, layerIndex);
+
+    setLoadedTextures((prev) => {
+      const newTextures = [...prev];
+      if (!newTextures[imageKey] || !newTextures[imageKey][layerIndex])
+        return prev;
+
+      newTextures[imageKey][layerIndex] = {
+        ...newTextures[imageKey][layerIndex],
+        texture: textureObj.texture,
+        url: textureObj.url,
+        visible: textureObj.visible,
+        name: textureObj.name,
+      };
+
+      return newTextures;
+    });
+  };
+  const applyUndoRedo = () => {
+    const stack = undoStacks[selectedImageKey];
+    if (!stack) return;
+
+    const step = stack.current;
+    if (!step) return;
+
+    applyTextureToLayer(selectedImageKey, step.layerIndex, step.url);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isUndo = (e.ctrlKey || e.metaKey) && e.key === "z";
+      const isRedo =
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "y" || (e.shiftKey && e.key === "z"));
+
+      const stack = undoStacks[selectedImageKey];
+      const canUndo = stack?.canUndo() ?? false;
+      const canRedo = stack?.canRedo() ?? false;
+
+      if (isUndo && canUndo) {
+        e.preventDefault();
+        stack.undo();
+        applyUndoRedo();
+      }
+
+      if (isRedo && canRedo) {
+        e.preventDefault();
+        stack.redo();
+        applyUndoRedo();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undoStacks, selectedImageKey]);
 
   // useeffect that need any usestate so it rerender
   useEffect(() => {

@@ -11,6 +11,8 @@ export const useApplyDrawingToLayer = () => {
     selectedImageKey,
     selectedLayer,
     tool,
+    undoStacks,
+    ensureUndoStack,
   } = useImageContext();
 
   const applyDrawingToLayer = async (
@@ -21,7 +23,6 @@ export const useApplyDrawingToLayer = () => {
     const originalTextureObj =
       loadedTextures[selectedImageKey]?.[selectedLayer];
     if (!app || !originalTextureObj) return;
-
     const newTexture = renderDrawingToTexture(
       app,
       drawingPath,
@@ -34,6 +35,19 @@ export const useApplyDrawingToLayer = () => {
     if (!newTexture) return;
 
     const newUrl = await app.renderer.extract.base64(newTexture);
+
+    const imageKeyStr = selectedImageKey.toString();
+    if (!undoStacks[imageKeyStr]) {
+      ensureUndoStack(selectedImageKey, {
+        layerIndex: selectedLayer,
+        url: originalTextureObj.url, // use current layer's url as initial state
+      });
+    }
+
+    undoStacks[imageKeyStr]?.add({
+      layerIndex: selectedLayer,
+      url: newUrl,
+    });
 
     setLoadedTextures((prev) => {
       const newTextures = [...prev];

@@ -4,6 +4,7 @@ import { Layers } from "../components/Layers";
 import { Options } from "../components/Options";
 import { Tools } from "../components/Tools";
 import { ImagesSelection } from "../components/ImagesSelection";
+import { useEffect } from "react";
 
 export const DrawingPage = () => {
   return (
