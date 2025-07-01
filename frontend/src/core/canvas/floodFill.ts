@@ -25,6 +25,7 @@ export const floodFillCanvas = (
     b: pixels[index + 2],
     a: pixels[index + 3],
   };
+  console.log(pixels);
 
   const newColorRgb = hexToRgba(newColor);
   if (colorMatch(targetColor, newColorRgb)) return pixels;

@@ -7,22 +7,33 @@ const useFloodFill = () => {
   const { loadedTextures, setLoadedTextures, selectedImageKey, selectedLayer } =
     useImageContext();
 
-  const floodFill = (x: number, y: number, newColor: string, app: any) => {
+  const floodFill = async (
+    x: number,
+    y: number,
+    newColor: string,
+    app: any
+  ) => {
     const texture = loadedTextures[selectedImageKey][selectedLayer]?.texture;
     if (!texture || !app?.renderer) return;
+    console.log(texture);
 
     const width = texture.width;
     const height = texture.height;
 
     const { pixels } = app.renderer.extract.pixels(texture);
+    console.log(pixels);
     const filledPixels = floodFillCanvas(pixels, width, height, x, y, newColor);
-
-    const canvas = createTextureFromPixels(filledPixels, width, height);
-    if (!canvas) return;
-
-    const newTexture = Texture.from(canvas);
-    const newUrl = canvas.toDataURL();
-
+    console.log(filledPixels);
+    const newTexture = await createTextureFromPixels(
+      filledPixels,
+      width,
+      height,
+      app
+    );
+    if (!newTexture) return;
+    console.log(newTexture);
+    // const newTexture = Texture.from(canvas);
+    const newUrl = await app.renderer.extract.base64(newTexture);
     setLoadedTextures((prev) => {
       const newTextures = [...prev];
       newTextures[selectedImageKey] = newTextures[selectedImageKey].map(

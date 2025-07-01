@@ -1,4 +1,4 @@
-import { Texture } from "pixi.js";
+import { Application, RenderTexture, Texture } from "pixi.js";
 
 export const createBlankTexture = () => {
   const canvas = document.createElement("canvas");
@@ -51,19 +51,15 @@ export function colorMatch(
   );
 }
 
-export function createTextureFromPixels(
+export async function createTextureFromPixels(
   pixels: Uint8Array,
   width: number,
-  height: number
+  height: number,
+  app: Application
 ) {
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
   const imageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-  ctx.putImageData(imageData, 0, 0);
+  const bitmap = await createImageBitmap(imageData);
 
-  return canvas;
+  const texture = RenderTexture.from(bitmap);
+  return texture;
 }
