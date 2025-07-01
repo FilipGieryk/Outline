@@ -4,8 +4,13 @@ import { createTextureFromPixels } from "../utils/canvas";
 import { Texture } from "pixi.js";
 
 const useFloodFill = () => {
-  const { loadedTextures, setLoadedTextures, selectedImageKey, selectedLayer } =
-    useImageContext();
+  const {
+    loadedTextures,
+    setLoadedTextures,
+    selectedImageKey,
+    selectedLayer,
+    undoStacks,
+  } = useImageContext();
 
   const floodFill = async (
     x: number,
@@ -31,9 +36,15 @@ const useFloodFill = () => {
       app
     );
     if (!newTexture) return;
-    console.log(newTexture);
-    // const newTexture = Texture.from(canvas);
     const newUrl = await app.renderer.extract.base64(newTexture);
+
+    const imageKeyStr = selectedImageKey.toString();
+
+    undoStacks[imageKeyStr]?.add({
+      layerIndex: selectedLayer,
+      url: newUrl,
+    });
+
     setLoadedTextures((prev) => {
       const newTextures = [...prev];
       newTextures[selectedImageKey] = newTextures[selectedImageKey].map(
